@@ -1,0 +1,267 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --panel-2: #1f2430;
+  --text: #f4f6f8;
+  --muted: #aab2c0;
+  --accent: #d4af37;
+  --accent-2: #f5d76e;
+  --border: rgba(255, 255, 255, 0.08);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(212, 175, 55, 0.14), transparent 30%),
+    linear-gradient(180deg, #0b0d11 0%, #11141a 100%);
+  color: var(--text);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.public-header,
+.app-header,
+.public-footer,
+.app-sidebar,
+.login-modal-card,
+.panel,
+.metric-card {
+  border: 1px solid var(--border);
+  background: rgba(23, 26, 33, 0.88);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.public-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.brand-link {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.brand-mark,
+.app-title {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.brand-mark {
+  color: var(--accent);
+  font-size: 1.25rem;
+}
+
+.brand-sub,
+.eyebrow {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.public-nav {
+  display: flex;
+  gap: 1rem;
+  color: var(--muted);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #111;
+  border: 0;
+  font-weight: 700;
+}
+
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 10, 14, 0.65);
+  z-index: 50;
+}
+
+.login-modal-card {
+  width: min(520px, calc(100vw - 2rem));
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+.stack-gap {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.hero {
+  padding: 4rem 1.5rem 2rem;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+.hero-copy,
+.panel,
+.metric-card {
+  border-radius: 24px;
+  padding: 1.5rem;
+}
+
+.hero-copy {
+  min-height: 340px;
+  display: grid;
+  align-content: end;
+  background:
+    linear-gradient(180deg, rgba(15, 17, 21, 0.15), rgba(15, 17, 21, 0.82)),
+    url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1200&q=80') center/cover;
+}
+
+.hero-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--accent-2);
+  margin-bottom: 1rem;
+}
+
+.hero h1 {
+  font-size: clamp(2.2rem, 5vw, 4.4rem);
+  max-width: 11ch;
+}
+
+.section-grid {
+  padding: 0 1.5rem 2rem;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.metric-card {
+  background: linear-gradient(180deg, rgba(31, 36, 48, 0.95), rgba(23, 26, 33, 0.95));
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--accent-2);
+}
+
+.app-body {
+  display: grid;
+  grid-template-columns: 270px 1fr;
+  min-height: calc(100vh - 84px);
+}
+
+.app-sidebar {
+  padding: 1rem;
+  display: grid;
+  gap: 0.65rem;
+  align-content: start;
+}
+
+.sidebar-link {
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  color: var(--muted);
+}
+
+.sidebar-link.active,
+.sidebar-link:hover {
+  color: #111;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+.app-content {
+  padding: 1.25rem;
+}
+
+.app-header {
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-header-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.public-footer {
+  margin-top: 2rem;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-heading {
+  margin-bottom: 1rem;
+}
+
+.panel {
+  overflow: hidden;
+}
+
+.app-table {
+  width: 100%;
+  color: var(--text);
+}
+
+.app-table th,
+.app-table td {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.public-page {
+  padding: 1.5rem;
+}
+
+@media (max-width: 992px) {
+  .hero-grid,
+  .app-body {
+    grid-template-columns: 1fr;
+  }
+
+  .public-header,
+  .public-footer,
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .app-sidebar {
+    grid-auto-flow: column;
+    overflow-x: auto;
+  }
+}
