@@ -35,12 +35,12 @@ export function CrudPage({ title, endpoint, columns }: { title: string; endpoint
               </thead>
               <tbody>
                 {(data ?? []).map((row, index) => (
-                  <tr key={String(row.id ?? index)}>
+                  <tr key={String(row.id ?? row.MaHoSo ?? index)}>
                     {columns.map((column) => (
                       <td key={column.key}>
                         {column.money
                           ? formatMoney(row[column.key] as string | number | null)
-                          : String(row[column.key] ?? '-')}
+                          : String(row[column.key] ?? row[column.key.charAt(0).toUpperCase() + column.key.slice(1)] ?? '-')}
                       </td>
                     ))}
                   </tr>

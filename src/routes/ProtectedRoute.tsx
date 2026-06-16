@@ -18,11 +18,14 @@ export function ProtectedRoute({
     return <Navigate to="/" replace />;
   }
 
-  if (role === 'admin' && !user.isAdmin) {
+  // Chuyển role thành chữ thường để so sánh an toàn
+  const isUserAdmin = user.role.toLowerCase() === 'admin';
+
+  if (role === 'admin' && !isUserAdmin) {
     return <Navigate to="/employee/dashboard" replace />;
   }
 
-  if (role === 'employee' && user.isAdmin) {
+  if (role === 'employee' && isUserAdmin) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 

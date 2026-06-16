@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 
 type User = {
-  id: number;
+  id: string; // Sửa id thành string để khớp với VarChar trong Database
   maNV: string;
   hoTen: string;
   email: string;
   soDienThoai?: string | null;
   chucVu: string;
-  isAdmin: boolean;
+  role: string; // Đã đổi isAdmin thành role
 };
 
 type AuthContextValue = {
@@ -52,7 +52,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const response = await authService.login(maNV, matKhau);
     localStorage.setItem('accessToken', response.data.accessToken);
     setUser(response.data.user);
-    navigate(response.data.user.isAdmin ? '/admin/dashboard' : '/employee/dashboard');
+    
+    // Đã thay đổi: Dùng role thay vì isAdmin để điều hướng
+    const isUserAdmin = response.data.user.role.toLowerCase() === 'admin';
+    navigate(isUserAdmin ? '/admin/dashboard' : '/employee/dashboard');
   };
 
   const logout = () => {
