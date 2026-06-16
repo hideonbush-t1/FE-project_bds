@@ -76,47 +76,46 @@ export default function ThemKhachHang() {
   return (
     <div style={{ padding: '20px', maxWidth: '600px', fontFamily: 'Arial, sans-serif', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', margin: '20px auto' }}>
       <h2 style={{ color: '#28a745', borderBottom: '2px solid #28a745', paddingBottom: '10px', marginBottom: '20px' }}>
-         ➕ TIẾP NHẬN HỒ SƠ KHÁCH HÀNG MỚI (SRS 5.5.2)
+          ➕ TIẾP NHẬN HỒ SƠ KHÁCH HÀNG MỚI 
       </h2>
       
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         
-        <label style={{ fontWeight: 'bold' }}>Mã Khách Hàng (*):</label>
+        <label style={{ fontWeight: 'bold', color: '#333' }}>Mã Khách Hàng (*):</label>
         <input type="text" name="maKH" required placeholder="Ví dụ: KH009" value={formData.maKH} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
 
-        {/* ĐỒNG BỘ THEO BIỂU MẪU MỚI NHẤT CỦA NHÓM */}
-        <label style={{ fontWeight: 'bold' }}>Tên khách hàng (*):</label>
+        <label style={{ fontWeight: 'bold', color: '#333' }}>Tên khách hàng (*):</label>
         <input type="text" name="hoTen" required placeholder="Nguyễn Văn Hoàn" value={formData.hoTen} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
 
-        <label style={{ fontWeight: 'bold' }}>Số Điện Thoại liên hệ (*):</label>
+        <label style={{ fontWeight: 'bold', color: '#333' }}>Số Điện Thoại liên hệ (*):</label>
         <input type="text" name="soDienThoai" required placeholder="09xxxxxxxx" value={formData.soDienThoai} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
 
-        <label style={{ fontWeight: 'bold' }}>Loại Yêu Cầu (*):</label>
+        <label style={{ fontWeight: 'bold', color: '#333' }}>Loại Yêu Cầu (*):</label>
         <select name="loaiKH" value={formData.loaiKH} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}>
           <option value="Mua">Nhu cầu Mua / Thuê Bất Động Sản</option>
           <option value="Bán">Nhu cầu Bán / Cho thuê Bất Động Sản</option>
         </select>
 
-        <label style={{ fontWeight: 'bold' }}>Giới Tính:</label>
+        <label style={{ fontWeight: 'bold', color: '#333' }}>Giới Tính:</label>
         <select name="gioiTinh" value={formData.gioiTinh} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}>
           <option value="Nam">Nam</option>
           <option value="Nữ">Nữ</option>
           <option value="Khác">Khác</option>
         </select>
 
-        <label style={{ fontWeight: 'bold' }}>Ngày Sinh:</label>
+        <label style={{ fontWeight: 'bold', color: '#333' }}>Ngày Sinh:</label>
         <input type="date" name="ngaySinh" value={formData.ngaySinh} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
 
-        <label style={{ fontWeight: 'bold' }}>Số CMND / CCCD:</label>
+        <label style={{ fontWeight: 'bold', color: '#333' }}>Số CMND / CCCD:</label>
         <input type="text" name="soCMND" placeholder="Nhập số CMND" value={formData.soCMND} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
 
-        <label style={{ fontWeight: 'bold' }}>Địa Chỉ Cư Trú:</label>
+        <label style={{ fontWeight: 'bold', color: '#333' }}>Địa Chỉ Cư Trú:</label>
         <input type="text" name="diaChi" placeholder="Số nhà, đường, tỉnh thành" value={formData.diaChi} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
 
-        <label style={{ fontWeight: 'bold' }}>Email:</label>
+        <label style={{ fontWeight: 'bold', color: '#333' }}>Email:</label>
         <input type="email" name="email" placeholder="example@gmail.com" value={formData.email} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
 
-        <label style={{ fontWeight: 'bold' }}>Mã Nhân Viên Phụ Trách Quản Lý (Chuỗi ký tự):</label>
+        <label style={{ fontWeight: 'bold', color: '#333' }}>Mã Nhân Viên Phụ Trách Quản Lý (Chuỗi ký tự):</label>
         <input type="text" name="nhanVienId" placeholder="Ví dụ: NV001 hoặc 1" value={formData.nhanVienId} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
 
         <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
