@@ -18,7 +18,7 @@ export function ProtectedRoute({
     return <Navigate to="/" replace />;
   }
 
-  // Đã thay đổi: Chuyển role thành chữ thường để so sánh an toàn, thay thế cho isAdmin cũ
+  // Chuyển role thành chữ thường để so sánh an toàn
   const isUserAdmin = user.role.toLowerCase() === 'admin';
 
   if (role === 'admin' && !isUserAdmin) {
