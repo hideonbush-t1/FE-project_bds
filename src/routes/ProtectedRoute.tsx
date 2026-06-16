@@ -1,30 +1,17 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { jwtDecode } from 'jwt-decode';
+export function ProtectedRoute({ role, children }: { role: string, children: JSX.Element }) {
+  const token = localStorage.getItem('accessToken');
+  if (!token) return <Navigate to="/" />;
 
-export function ProtectedRoute({
-  role,
-  children,
-}: {
-  role: 'admin' | 'employee';
-  children: React.ReactNode;
-}) {
-  const { user, loading } = useAuth();
+  const decoded: any = jwtDecode(token);
+  
+  // LOG NÀY SẼ CHO BẠN BIẾT BẠN BỊ CHẶN VÌ SAO
+  console.log('ProtectedRoute đang kiểm tra, Role token:', decoded.role, 'Role route yêu cầu:', role);
 
-  if (loading) {
-    return <div className="app-shell p-4">Đang tải...</div>;
+  if (decoded.role !== role) {
+    return <Navigate to={`/${decoded.role}/dashboard`} replace />;
   }
-
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (role === 'admin' && !user.isAdmin) {
-    return <Navigate to="/employee/dashboard" replace />;
-  }
-
-  if (role === 'employee' && user.isAdmin) {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
-
-  return <>{children}</>;
+  return children;
 }

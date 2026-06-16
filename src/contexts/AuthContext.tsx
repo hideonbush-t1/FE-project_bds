@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
-
+import { jwtDecode } from 'jwt-decode';
 type User = {
   id: number;
   maNV: string;
@@ -44,12 +44,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (maNV: string, matKhau: string) => {
-    const response = await authService.login(maNV, matKhau);
-    localStorage.setItem('accessToken', response.data.accessToken);
-    setUser(response.data.user);
-    navigate(response.data.user.isAdmin ? '/admin/dashboard' : '/employee/dashboard');
-  };
+ const login = async (maNV: string, matKhau: string) => {
+  const response = await fetch('http://localhost:4000/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ maNV, matKhau }),
+  });
+
+  if (!response.ok) throw new Error('Đăng nhập thất bại');
+
+  const data = await response.json();
+  const token = data.access_token;
+  localStorage.setItem('accessToken', token);
+
+  const decoded: any = jwtDecode(token);
+  setUser(decoded);
+
+  // LOG ĐỂ KIỂM CHỨNG
+  console.log('Role của bạn là:', decoded.role); 
+
+  // ĐIỀU HƯỚNG CHÍNH XÁC
+  if (decoded.role === 'admin') {
+    navigate('/admin/dashboard'); 
+  } else {
+    navigate('/employee/dashboard');
+  }
+};
 
   const logout = () => {
     localStorage.removeItem('accessToken');
