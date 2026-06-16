@@ -21,7 +21,7 @@ export function PublicDataPanel({
       {error ? <div className="text-danger">{error}</div> : null}
       {!loading && !error ? (
         <div className="row g-3">
-          {(data ?? []).slice(0, 6).map((item) => (
+          {(data ?? []).slice(0, 6).map((item: any) => (
             <div className="col-md-6 col-xl-4" key={String(item.id)}>
               <div className="panel h-100">
                 <div className="fw-semibold mb-2">{String(item.tieuDe ?? item.tenHoSo ?? item.hoTen ?? 'Mục dữ liệu')}</div>

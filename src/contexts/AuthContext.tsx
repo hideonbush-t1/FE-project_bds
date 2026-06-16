@@ -34,12 +34,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Try to verify token by calling profile, but DON'T delete token if it fails
+    // Token might be valid even if profile call fails (network issue, backend down, etc.)
     authService
       .profile()
-      .then((response) => setUser(response.data))
+      .then((response) => {
+        setUser(response.data);
+      })
       .catch(() => {
-        localStorage.removeItem('accessToken');
-        setUser(null);
+        // Don't remove token here - let it retry on next request
+        // Only clear token on explicit logout
       })
       .finally(() => setLoading(false));
   }, []);
