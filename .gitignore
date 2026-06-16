@@ -1,15 +1,33 @@
+# Các thư mục chứa code đã build và thư viện (Cực kỳ quan trọng)
 node_modules
-.DS_Store
+dist
+dist-ssr
+build
+
+# File môi trường chứa API key, mật khẩu (Tuyệt đối không đẩy lên Git)
 .env
 .env.local
 .env.*.local
-dist
-build
+
+# Các thư mục sinh ra khi chạy test
 coverage
-backend/dist
-backend/node_modules
-backend/.env
-frontend/dist
-frontend/node_modules
-frontend/.env
-frontend/.vite
+.nyc_output
+
+# Các file rác của hệ điều hành và IDE (VS Code, WebStorm)
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# File log rác
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Bộ nhớ tạm của Vite
+.vite
