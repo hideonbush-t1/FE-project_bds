@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { http } from '../../../api/http';
 
 export default function ChiTietKhachHang() {
   const { id } = useParams(); 
@@ -18,10 +18,7 @@ export default function ChiTietKhachHang() {
       }
 
       try {
-        const token = localStorage.getItem('accessToken') || '';
-        const res = await axios.get(`http://localhost:4000/khach-hang/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await http.get(`http://localhost:4000/khach-hang/${id}`);
         setKhachHang(res.data);
       } catch (error: any) {
         console.error("Lỗi khi tải chi tiết khách hàng:", error);
@@ -39,8 +36,8 @@ export default function ChiTietKhachHang() {
 
   return (
     <div style={{ padding: '20px', maxWidth: '600px', fontFamily: 'Arial, sans-serif', color: '#111' }}>
-      <h2 style={{ color: '#111' }}>🔍 CHI TIẾT HỒ SƠ KHÁCH HÀNG (SRS 5.5.3)</h2>
-      <div style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '6px', backgroundColor: '#fff', lineHeight: '2', color: '#111' }}>
+      <h2 style={{ color: '#fafafa' }}>🔍 CHI TIẾT HỒ SƠ KHÁCH HÀNG </h2>
+      <div style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '6px', backgroundColor: '#1671cc', lineHeight: '2', color: '#111' }}>
         <p><strong>Mã Khách Hàng:</strong> <span style={{ color: '#0070f3', fontWeight: 'bold' }}>{khachHang.maKH}</span></p> {/* Đã sửa thành maKH viết thường */}
         <p><strong>Họ và tên:</strong> {khachHang.hoTen}</p>
         <p><strong>Nhu cầu:</strong> {khachHang.loaiKH}</p>
