@@ -48,15 +48,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (maNV: string, matKhau: string) => {
-    const response = await authService.login(maNV, matKhau);
-    localStorage.setItem('accessToken', response.data.accessToken);
-    setUser(response.data.user);
-    
-    // Đã thay đổi: Dùng role thay vì isAdmin để điều hướng
-    const isUserAdmin = response.data.user.role.toLowerCase() === 'admin';
-    navigate(isUserAdmin ? '/admin/dashboard' : '/employee/dashboard');
-  };
+// src/contexts/AuthContext.tsx
+
+const login = async (maNV: string, matKhau: string) => {
+  const response = await authService.login(maNV, matKhau);
+  
+  // Lưu token vào localStorage (dùng .access_token khớp với Backend)
+  localStorage.setItem('accessToken', response.data.access_token);
+  
+  // Lưu user vào state
+  setUser(response.data.user);
+  
+  // Điều hướng dựa trên role
+  const isUserAdmin = response.data.user.role.toLowerCase() === 'admin';
+  navigate(isUserAdmin ? '/admin/dashboard' : '/employee/dashboard');
+};
 
   const logout = () => {
     localStorage.removeItem('accessToken');

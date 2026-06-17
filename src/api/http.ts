@@ -1,8 +1,7 @@
+// Trong file src/api/http.ts
 import axios from 'axios';
 
-export const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000',
-});
+const http = axios.create({ baseURL: 'http://localhost:4000' });
 
 http.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
@@ -11,3 +10,5 @@ http.interceptors.request.use((config) => {
   }
   return config;
 });
+
+export { http };
