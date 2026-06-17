@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 
 type User = {
-  id: string; // Sửa id thành string để khớp với VarChar trong Database
+  id: string;
   maNV: string;
   hoTen: string;
   email: string;
   soDienThoai?: string | null;
   chucVu: string;
-  role: string; // Đã đổi isAdmin thành role
+  role: string | number; // Chấp nhận cả chuỗi hoặc số từ Backend
 };
 
 type AuthContextValue = {
@@ -34,35 +34,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Try to verify token by calling profile, but DON'T delete token if it fails
-    // Token might be valid even if profile call fails (network issue, backend down, etc.)
     authService
       .profile()
       .then((response) => {
         setUser(response.data);
       })
       .catch(() => {
-        // Don't remove token here - let it retry on next request
-        // Only clear token on explicit logout
+        // Giữ token để thử lại sau
       })
       .finally(() => setLoading(false));
   }, []);
 
-// src/contexts/AuthContext.tsx
-
-const login = async (maNV: string, matKhau: string) => {
-  const response = await authService.login(maNV, matKhau);
-  
-  // Lưu token vào localStorage (dùng .access_token khớp với Backend)
-  localStorage.setItem('accessToken', response.data.access_token);
-  
-  // Lưu user vào state
-  setUser(response.data.user);
-  
-  // Điều hướng dựa trên role
-  const isUserAdmin = response.data.user.role.toLowerCase() === 'admin';
-  navigate(isUserAdmin ? '/admin/dashboard' : '/employee/dashboard');
-};
+  const login = async (maNV: string, matKhau: string) => {
+    const response = await authService.login(maNV, matKhau);
+    
+    // Lưu token
+    localStorage.setItem('accessToken', response.data.access_token);
+    
+    // Lưu user
+    const userData = response.data.user;
+    setUser(userData);
+    
+    // Chuẩn hóa role về chuỗi để so sánh
+    const role = String(userData.role).toLowerCase();
+    
+    console.log("Role nhận được là:", role);
+    
+    // Kiểm tra: Nếu là 'admin' hoặc số '1' thì điều hướng sang admin
+    if (role === 'admin' || role === '1') {
+      console.log("Đang điều hướng tới Admin Dashboard...");
+      navigate('/admin/dashboard', { replace: true }); 
+    } else {
+      console.log("Đang điều hướng tới Employee Dashboard...");
+      navigate('/employee/dashboard', { replace: true });
+    }
+  };
 
   const logout = () => {
     localStorage.removeItem('accessToken');
