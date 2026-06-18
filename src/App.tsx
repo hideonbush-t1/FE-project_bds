@@ -58,7 +58,11 @@ export function App() {
       >
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="nhan-vien" element={<AdminNhanVienPage />} />
+        
+        {/* ĐÃ SỬA: Đủ 3 route cho Khách Hàng (Danh sách, Thêm, Chi tiết) */}
         <Route path="khach-hang" element={<AdminKhachHangPage />} />
+        <Route path="khach-hang/create" element={<ThemKhachHang />} />
+        <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
         
         {/* Quản lý Bất Động Sản (Từ code mới) */}
         <Route path="bat-dong-san" element={<ListBatDongSan />} />

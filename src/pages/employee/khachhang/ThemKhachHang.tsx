@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; // Thêm useLocation
 import { http } from '../../../api/http';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function ThemKhachHang() {
   const navigate = useNavigate();
+  const location = useLocation(); // Lấy URL hiện tại
+  
   const [existingCCCD, setExistingCCCD] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     maKH: 'Đang tải...', 
@@ -18,6 +20,10 @@ export default function ThemKhachHang() {
     nhanVienId: '', 
     soCMND: ''
   });
+
+  // MẸO: Nhận diện Admin hay Nhân viên để quay lại cho chuẩn
+  const isRouteAdmin = location.pathname.includes('/admin');
+  const backUrl = isRouteAdmin ? '/admin/khach-hang' : '/employee/khach-hang';
 
   const labelStyle = { fontWeight: 'bold', color: '#000', marginBottom: '5px', display: 'block' };
   const inputStyle = { width: '100%', padding: '10px', border: '1px solid #333', borderRadius: '4px', color: '#000', backgroundColor: '#fff' };
@@ -52,7 +58,6 @@ export default function ThemKhachHang() {
       return;
     }
 
-    // TẠO ĐỐI TƯỢNG MỚI ĐỂ GỬI ĐI (Không dùng delete)
     const submitData: any = {
       maKH: formData.maKH,
       loaiKH: formData.loaiKH,
@@ -70,7 +75,8 @@ export default function ThemKhachHang() {
     try {
       await http.post('/khach-hang', submitData);
       toast.success('Thêm khách hàng thành công!');
-      setTimeout(() => navigate('/employee/khach-hang'), 1500);
+      // SỬA TẠI ĐÂY: Dùng backUrl để điều hướng động
+      setTimeout(() => navigate(backUrl), 1500); 
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Có lỗi xảy ra!');
     }
@@ -104,7 +110,11 @@ export default function ThemKhachHang() {
         <label style={labelStyle}>Ngày Sinh:</label>
         <input type="date" name="ngaySinh" value={formData.ngaySinh} onChange={handleChange} style={inputStyle} />
 
-        <button type="submit" style={{ padding: '12px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>LƯU THÔNG TIN</button>
+        {/* THÊM NÚT HỦY ĐỂ UX TỐT HƠN */}
+        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+          <button type="submit" style={{ flex: 1, padding: '12px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>LƯU THÔNG TIN</button>
+          <button type="button" onClick={() => navigate(backUrl)} style={{ flex: 1, padding: '12px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>HỦY</button>
+        </div>
       </form>
     </div>
   );

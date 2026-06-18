@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { http } from '../../api/http'; // Giả sử bạn dùng axios instance chung của dự án
+import { http } from '../../api/http'; 
 
 export function AdminProfilePage() {
   const { user, refreshProfile } = useAuth();
@@ -27,7 +27,6 @@ export function AdminProfilePage() {
     }
 
     try {
-      // ĐÃ SỬA: Map đúng tên biến tiếng Việt ở Frontend sang tiếng Anh cho Backend
       await http.post('/auth/change-password', {
         currentPassword: matKhauCu,
         newPassword: matKhauMoi,
@@ -38,7 +37,6 @@ export function AdminProfilePage() {
       setMatKhauMoi('');
       setXacNhanMatKhau('');
     } catch (error: any) {
-      // Backend NestJS thường trả về mảng lỗi trong error.response.data.message
       const errorMsg = Array.isArray(error.response?.data?.message) 
         ? error.response.data.message[0] 
         : error.response?.data?.message;
@@ -50,8 +48,19 @@ export function AdminProfilePage() {
     }
   };
 
+  // BIẾN STYLE CHUNG ĐỂ ÉP MÀU CHỮ TRẮNG CHO INPUT
+  const inputStyle = { color: '#fff', backgroundColor: 'transparent' };
+
   return (
     <div className="content-wrapper">
+      {/* THÊM ĐOẠN STYLE NÀY VÀO ĐỂ ĐỔI MÀU PLACEHOLDER */}
+      <style>{`
+        .form-control::placeholder {
+          color: #aaa !important;
+          opacity: 1;
+        }
+      `}</style>
+      
       <div className="page-title">
         <h1>Hồ Sơ Cá Nhân</h1>
       </div>
@@ -120,23 +129,23 @@ export function AdminProfilePage() {
                 <div className="form-row">
                   <div className="form-group">
                     <label>Họ và tên</label>
-                    <input type="text" className="form-control" value={user?.hoTen || ''} disabled />
+                    <input type="text" className="form-control" value={user?.hoTen || ''} disabled style={inputStyle} />
                   </div>
                   <div className="form-group">
                     <label>Mã Nhân Viên</label>
-                    <input type="text" className="form-control" value={user?.maNV || ''} disabled />
+                    <input type="text" className="form-control" value={user?.maNV || ''} disabled style={inputStyle} />
                   </div>
                   <div className="form-group">
                     <label>Email</label>
-                    <input type="email" className="form-control" value={user?.email || 'Chưa cập nhật'} disabled />
+                    <input type="email" className="form-control" value={user?.email || 'Chưa cập nhật'} disabled style={inputStyle} />
                   </div>
                   <div className="form-group">
                     <label>Số điện thoại</label>
-                    <input type="text" className="form-control" value={user?.soDienThoai || 'Chưa cập nhật'} disabled />
+                    <input type="text" className="form-control" value={user?.soDienThoai || 'Chưa cập nhật'} disabled style={inputStyle} />
                   </div>
                   <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                     <label>Chức vụ / Quyền hạn</label>
-                    <input type="text" className="form-control" value={user?.role === '1' || user?.role?.toLowerCase() === 'admin' ? 'Quản trị viên (Admin)' : 'Nhân viên kinh doanh'} disabled />
+                    <input type="text" className="form-control" value={user?.role === '1' || user?.role?.toLowerCase() === 'admin' ? 'Quản trị viên (Admin)' : 'Nhân viên kinh doanh'} disabled style={inputStyle} />
                   </div>
                 </div>
               )}
@@ -153,6 +162,7 @@ export function AdminProfilePage() {
                       value={matKhauCu}
                       onChange={(e) => setMatKhauCu(e.target.value)}
                       required 
+                      style={inputStyle}
                     />
                   </div>
                   <div className="form-group mb-4">
@@ -164,6 +174,7 @@ export function AdminProfilePage() {
                       value={matKhauMoi}
                       onChange={(e) => setMatKhauMoi(e.target.value)}
                       required 
+                      style={inputStyle}
                     />
                   </div>
                   <div className="form-group mb-4">
@@ -175,6 +186,7 @@ export function AdminProfilePage() {
                       value={xacNhanMatKhau}
                       onChange={(e) => setXacNhanMatKhau(e.target.value)}
                       required 
+                      style={inputStyle}
                     />
                   </div>
                   <div className="form-actions mt-4">

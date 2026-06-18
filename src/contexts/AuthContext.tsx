@@ -66,11 +66,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log("Role nhận được là:", role);
 
     // ========================================================
-    // 🧹 DIỆT TẬN GỐC MÀN ĐEN BOOTSTRAP TRƯỚC KHI CHUYỂN TRANG
+    // 🧹 DIỆT TẬN GỐC MÀN ĐEN VÀ ÉP HIỆN LẠI THANH CUỘN
     // ========================================================
+    // 1. Xóa class khóa cuộn của Bootstrap
     document.body.classList.remove('modal-open');
-    document.body.style.overflow = '';
-    document.body.style.paddingRight = '';
+    
+    // 2. Ép buộc thẻ <body> và <html> phải hiện lại thanh cuộn tự động
+    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
+    
+    // 3. Xóa phần đệm lề phải dư thừa (do Bootstrap chèn vào để bù độ rộng thanh cuộn)
+    document.body.style.paddingRight = '0px';
+    document.documentElement.style.paddingRight = '0px';
+    
+    // 4. Tiêu diệt màn đen
     const backdrops = document.querySelectorAll('.modal-backdrop');
     backdrops.forEach(backdrop => backdrop.remove());
     // ========================================================

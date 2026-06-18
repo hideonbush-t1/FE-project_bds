@@ -2139,3 +2139,9 @@ body.modal-open {
   background-color: rgba(212, 175, 55, 0.12) !important;
   color: #ffffff !important;
 }
+
+.form-control:disabled {
+    background-color: #1a1e2e !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
