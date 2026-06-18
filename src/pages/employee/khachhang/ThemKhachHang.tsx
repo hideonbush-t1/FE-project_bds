@@ -1,131 +1,110 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { http } from '../../../api/http';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function ThemKhachHang() {
   const navigate = useNavigate();
-  
-  // 1. Khởi tạo State chuẩn xác theo các trường Prisma DB yêu cầu
+  const [existingCCCD, setExistingCCCD] = useState<string[]>([]);
   const [formData, setFormData] = useState({
-    maKH: '',
-    loaiKH: 'Mua',
-    hoTen: '',
+    maKH: 'Đang tải...', 
+    loaiKH: 'Mua', 
+    hoTen: '', 
     gioiTinh: 'Nam',
-    ngaySinh: '',
-    diaChi: '',
-    soDienThoai: '',
+    ngaySinh: '', 
+    diaChi: '', 
+    soDienThoai: '', 
     email: '',
-    nhanVienId: '',
+    nhanVienId: '', 
     soCMND: ''
   });
+
+  const labelStyle = { fontWeight: 'bold', color: '#000', marginBottom: '5px', display: 'block' };
+  const inputStyle = { width: '100%', padding: '10px', border: '1px solid #333', borderRadius: '4px', color: '#000', backgroundColor: '#fff' };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const res = await http.get('/khach-hang');
+        const list = res.data;
+        const maxCode = list.reduce((max: number, kh: any) => Math.max(max, parseInt(kh.id?.replace('KH', '') || 0)), 0);
+        
+        setExistingCCCD(list.map((kh: any) => kh.soCMND).filter(Boolean));
+        setFormData(prev => ({
+          ...prev,
+          maKH: `KH${(maxCode + 1).toString().padStart(3, '0')}`,
+          nhanVienId: user.id || 'NV_CHUA_XAC_DINH'
+        }));
+      } catch (err) { console.error(err); }
+    };
+    fetchData();
+  }, []);
 
   const handleChange = (e: any) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: any) => {
-    e.preventDefault(); // Ngăn hành vi tải lại trang mặc định gây sập kết nối (Network Error)
+    e.preventDefault();
+    if (existingCCCD.includes(formData.soCMND.trim())) {
+      toast.error("Số CMND/CCCD này đã tồn tại!");
+      return;
+    }
+
+    // TẠO ĐỐI TƯỢNG MỚI ĐỂ GỬI ĐI (Không dùng delete)
+    const submitData: any = {
+      maKH: formData.maKH,
+      loaiKH: formData.loaiKH,
+      hoTen: formData.hoTen,
+      gioiTinh: formData.gioiTinh,
+      soDienThoai: formData.soDienThoai,
+      soCMND: formData.soCMND,
+      nhanVienId: formData.nhanVienId,
+      diaChi: formData.diaChi
+    };
+
+    if (formData.ngaySinh) submitData.ngaySinh = formData.ngaySinh;
+    if (formData.email) submitData.email = formData.email;
+
     try {
-      // 2. Chuẩn hóa dữ liệu tương thích 100% với CreateKhachHangDto
-      const dataToSend: any = {
-        maKH: formData.maKH.trim(),
-        loaiKH: formData.loaiKH,
-        hoTen: formData.hoTen.trim(),
-        gioiTinh: formData.gioiTinh,
-      };
-
-      // GIẢI QUYẾT LỖI NGÀY SINH (@IsDateString): Chỉ gửi nếu có giá trị
-      if (formData.ngaySinh) {
-        dataToSend.ngaySinh = formData.ngaySinh;
-      } else {
-        dataToSend.ngaySinh = undefined;
-      }
-      
-      if (formData.diaChi.trim()) dataToSend.diaChi = formData.diaChi.trim();
-      if (formData.soDienThoai.trim()) dataToSend.soDienThoai = formData.soDienThoai.trim();
-      if (formData.email.trim()) dataToSend.email = formData.email.trim();
-      if (formData.soCMND.trim()) dataToSend.soCMND = formData.soCMND.trim();
-      
-      // FIX TRIỆT ĐỂ LỖI KHÓA NGOẠI MaNVQL:
-      // Nếu có nhập -> Gửi chuỗi đã trim(). 
-      // Nếu để trống -> Gán hẳn là null để Prisma hiểu đây là trường không có liên kết (bỏ qua check FK).
-      dataToSend.nhanVienId = formData.nhanVienId.trim() ? formData.nhanVienId.trim() : null;
-
-      console.log("Dữ liệu chuẩn hóa thực tế gửi lên NestJS:", dataToSend);
-      
-      // Sử dụng instance axios của nhóm hoặc gọi trực tiếp URL
-      await http.post('http://localhost:4000/khach-hang', dataToSend);
-      
-      alert('Hồ sơ khách hàng đã được tiếp nhận thành công vào Hệ thống!');
-      navigate('/employee/khach-hang');
+      await http.post('/khach-hang', submitData);
+      toast.success('Thêm khách hàng thành công!');
+      setTimeout(() => navigate('/employee/khach-hang'), 1500);
     } catch (error: any) {
-      console.error("Chi tiết lỗi từ backend:", error.response?.data);
-      console.error("Status code:", error.response?.status);
-      
-      // Hiển thị thông báo chi tiết lỗi từ Class-Validator hoặc Prisma gửi về
-      const errorMsg = error.response?.data?.message;
-      
-      if (error.response?.data?.error === "Internal Server Error" || !errorMsg) {
-        alert("Thêm mới thất bại: Mã Nhân viên Quản lý không tồn tại trong hệ thống! Vui lòng xóa trống ô này hoặc nhập đúng mã nhân viên có sẵn.");
-      } else {
-        alert(`Thêm mới thất bại: ${Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg}`);
-      }
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra!');
     }
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '600px', fontFamily: 'Arial, sans-serif', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', margin: '20px auto' }}>
-      <h2 style={{ color: '#28a745', borderBottom: '2px solid #28a745', paddingBottom: '10px', marginBottom: '20px' }}>
-          ➕ TIẾP NHẬN HỒ SƠ KHÁCH HÀNG MỚI 
-      </h2>
+    <div style={{ padding: '20px', maxWidth: '600px', margin: '20px auto', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', border: '1px solid #ddd' }}>
+      <Toaster position="top-center" />
+      <h2 style={{ color: '#28a745', borderBottom: '2px solid #28a745', paddingBottom: '10px', textAlign: 'center' }}>➕ THÊM KHÁCH HÀNG</h2>
       
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        
-        <label style={{ fontWeight: 'bold', color: '#333' }}>Mã Khách Hàng (*):</label>
-        <input type="text" name="maKH" required placeholder="Ví dụ: KH009" value={formData.maKH} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
-
-        <label style={{ fontWeight: 'bold', color: '#333' }}>Tên khách hàng (*):</label>
-        <input type="text" name="hoTen" required placeholder="Nguyễn Văn Hoàn" value={formData.hoTen} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
-
-        <label style={{ fontWeight: 'bold', color: '#333' }}>Số Điện Thoại liên hệ (*):</label>
-        <input type="text" name="soDienThoai" required placeholder="09xxxxxxxx" value={formData.soDienThoai} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
-
-        <label style={{ fontWeight: 'bold', color: '#333' }}>Loại Yêu Cầu (*):</label>
-        <select name="loaiKH" value={formData.loaiKH} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}>
-          <option value="Mua">Nhu cầu Mua / Thuê Bất Động Sản</option>
-          <option value="Bán">Nhu cầu Bán / Cho thuê Bất Động Sản</option>
-        </select>
-
-        <label style={{ fontWeight: 'bold', color: '#333' }}>Giới Tính:</label>
-        <select name="gioiTinh" value={formData.gioiTinh} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}>
-          <option value="Nam">Nam</option>
-          <option value="Nữ">Nữ</option>
-          <option value="Khác">Khác</option>
-        </select>
-
-        <label style={{ fontWeight: 'bold', color: '#333' }}>Ngày Sinh:</label>
-        <input type="date" name="ngaySinh" value={formData.ngaySinh} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
-
-        <label style={{ fontWeight: 'bold', color: '#333' }}>Số CMND / CCCD:</label>
-        <input type="text" name="soCMND" placeholder="Nhập số CMND" value={formData.soCMND} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
-
-        <label style={{ fontWeight: 'bold', color: '#333' }}>Địa Chỉ Cư Trú:</label>
-        <input type="text" name="diaChi" placeholder="Số nhà, đường, tỉnh thành" value={formData.diaChi} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
-
-        <label style={{ fontWeight: 'bold', color: '#333' }}>Email:</label>
-        <input type="email" name="email" placeholder="example@gmail.com" value={formData.email} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
-
-        <label style={{ fontWeight: 'bold', color: '#333' }}>Mã Nhân Viên Phụ Trách Quản Lý (Chuỗi ký tự):</label>
-        <input type="text" name="nhanVienId" placeholder="Ví dụ: NV001 hoặc 1" value={formData.nhanVienId} onChange={handleChange} style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }} />
-
-        <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-          <button type="submit" style={{ padding: '12px 24px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
-            Lưu Vào Hệ Thống
-          </button>
-          <button type="button" onClick={() => navigate('/employee/khach-hang')} style={{ padding: '12px 24px', backgroundColor: '#6c757d', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-            Hủy Bỏ
-          </button>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+          <div><label style={labelStyle}>Mã KH:</label><input name="maKH" value={formData.maKH} readOnly style={{...inputStyle, backgroundColor: '#f0f0f0'}} /></div>
+          <div><label style={labelStyle}>Mã NV:</label><input name="nhanVienId" value={formData.nhanVienId} readOnly style={{...inputStyle, backgroundColor: '#f0f0f0'}} /></div>
         </div>
+
+        <div><label style={labelStyle}>Họ Tên (*):</label><input name="hoTen" required value={formData.hoTen} onChange={handleChange} style={inputStyle} /></div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+          <div><label style={labelStyle}>Số CMND/CCCD (*):</label><input name="soCMND" required value={formData.soCMND} onChange={handleChange} style={inputStyle} /></div>
+          <div><label style={labelStyle}>Số ĐT (*):</label><input name="soDienThoai" required value={formData.soDienThoai} onChange={handleChange} style={inputStyle} /></div>
+        </div>
+
+        <div><label style={labelStyle}>Email:</label><input type="email" name="email" value={formData.email} onChange={handleChange} style={inputStyle} /></div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+          <div><label style={labelStyle}>Loại KH:</label><select name="loaiKH" value={formData.loaiKH} onChange={handleChange} style={inputStyle}><option value="Mua">Mua / Thuê</option><option value="Bán">Bán / Cho thuê</option></select></div>
+          <div><label style={labelStyle}>Giới Tính:</label><select name="gioiTinh" value={formData.gioiTinh} onChange={handleChange} style={inputStyle}><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select></div>
+        </div>
+
+        <label style={labelStyle}>Ngày Sinh:</label>
+        <input type="date" name="ngaySinh" value={formData.ngaySinh} onChange={handleChange} style={inputStyle} />
+
+        <button type="submit" style={{ padding: '12px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>LƯU THÔNG TIN</button>
       </form>
     </div>
   );
