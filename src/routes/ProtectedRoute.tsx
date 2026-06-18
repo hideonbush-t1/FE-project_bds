@@ -18,11 +18,13 @@ export function ProtectedRoute({
     return <Navigate to="/" replace />;
   }
 
-  if (role === 'admin' && !user.isAdmin) {
+  // Nếu route yêu cầu quyền 'admin' nhưng user không phải 'admin' -> Đẩy về trang nhân viên
+  if (role === 'admin' && user.role !== 'admin') {
     return <Navigate to="/employee/dashboard" replace />;
   }
 
-  if (role === 'employee' && user.isAdmin) {
+  // Nếu route yêu cầu quyền 'employee' nhưng user lại là 'admin' -> Đẩy về trang quản trị
+  if (role === 'employee' && user.role === 'admin') {
     return <Navigate to="/admin/dashboard" replace />;
   }
 

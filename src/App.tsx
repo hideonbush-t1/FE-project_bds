@@ -38,13 +38,9 @@ export function App() {
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
-   <Route
+  <Route
         path="/admin"
-        element={
-          <ProtectedRoute role="admin">
-            <AdminLayout />
-          </ProtectedRoute>
-        }
+        element={<AdminLayout />} 
       >
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="nhan-vien" element={<AdminNhanVienPage />} />

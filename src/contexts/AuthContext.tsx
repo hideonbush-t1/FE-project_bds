@@ -2,14 +2,15 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 
+// Cập nhật lại Type cho khớp 100% với dữ liệu Backend trả về
 type User = {
-  id: number;
+  id: string;
   maNV: string;
   hoTen: string;
   email: string;
   soDienThoai?: string | null;
   chucVu: string;
-  isAdmin: boolean;
+  role: string; // Đã sửa từ isAdmin thành role
 };
 
 type AuthContextValue = {
@@ -45,10 +46,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (maNV: string, matKhau: string) => {
+    // 1. Gọi API
     const response = await authService.login(maNV, matKhau);
-    localStorage.setItem('accessToken', response.data.accessToken);
-    setUser(response.data.user);
-    navigate(response.data.user.isAdmin ? '/admin/dashboard' : '/employee/dashboard');
+    
+    // 2. Ép kiểu dữ liệu sang any để TypeScript ngừng gạch đỏ
+    const data: any = response.data; 
+    
+    // 3. Lấy đúng tên biến access_token (có dấu gạch dưới) từ Backend
+    localStorage.setItem('accessToken', data.access_token);
+    
+    // 4. Cập nhật state User
+    setUser(data.user);
+    
+    // 5. Điều hướng chuẩn xác dựa trên trường 'role'
+    if (data.user?.role === 'admin') {
+      navigate('/admin/dashboard');
+    } else {
+      navigate('/employee/dashboard');
+    }
   };
 
   const logout = () => {
