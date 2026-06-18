@@ -9,7 +9,8 @@ type User = {
   email: string;
   soDienThoai?: string | null;
   chucVu: string;
-  role: string | number; // Chấp nhận cả chuỗi hoặc số từ Backend
+  role?: string; 
+  Role?: string; 
 };
 
 type AuthContextValue = {
@@ -37,9 +38,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authService
       .profile()
       .then((response) => {
-        // SỬA: Bao phủ mọi trường hợp cấu trúc dữ liệu Backend trả về
+        // Bao phủ mọi trường hợp cấu trúc dữ liệu Backend trả về
         const userData = response.data?.user || response.data?.data || response.data;
-        setUser(userData);
+        setUser(userData as User); // Ép kiểu an toàn khi set user
       })
       .catch(() => {
         // Giữ token để thử lại sau
@@ -53,14 +54,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Lưu token
     localStorage.setItem('accessToken', response.data.access_token);
     
-    // Lưu user
-    const userData = response.data.user;
+    // Lưu user an toàn
+    const userData = response.data.user as User;
     setUser(userData);
     
-    // Chuẩn hóa role về chuỗi để so sánh
-    const role = String(userData.role).toLowerCase();
+    // Chuẩn hóa role
+    const role = String(userData?.Role || userData?.role).toLowerCase();
     
     console.log("Role nhận được là:", role);
+
+    // ========================================================
+    // 🧹 DIỆT TẬN GỐC MÀN ĐEN BOOTSTRAP TRƯỚC KHI CHUYỂN TRANG
+    // ========================================================
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+    // ========================================================
     
     // Kiểm tra: Nếu là 'admin' hoặc số '1' thì điều hướng sang admin
     if (role === 'admin' || role === '1') {
@@ -83,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshProfile = async () => {
     const response = await authService.profile();
     const userData = response.data?.user || response.data?.data || response.data;
-    setUser(userData);
+    setUser(userData as User); // Ép kiểu an toàn khi refresh
   };
 
   const value = useMemo(() => ({ user, loading, login, logout, refreshProfile }), [user, loading]);
