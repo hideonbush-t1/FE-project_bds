@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 
 type User = {
-  id: string; // Sửa id thành string để khớp với VarChar trong Database
+  id: string; 
   maNV: string;
   hoTen: string;
   email: string;
   soDienThoai?: string | null;
   chucVu: string;
-  role: string; // Đã đổi isAdmin thành role
+  role: string; 
 };
 
 type AuthContextValue = {
@@ -34,39 +34,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Try to verify token by calling profile, but DON'T delete token if it fails
-    // Token might be valid even if profile call fails (network issue, backend down, etc.)
     authService
       .profile()
       .then((response) => {
-        setUser(response.data);
+        // SỬA: Bao phủ mọi trường hợp cấu trúc dữ liệu Backend trả về
+        const userData = response.data?.user || response.data?.data || response.data;
+        setUser(userData);
       })
       .catch(() => {
-        // Don't remove token here - let it retry on next request
-        // Only clear token on explicit logout
+        // SỬA: Nếu lấy profile thất bại (do token 'undefined' hoặc hết hạn), xóa luôn token để tránh kẹt
+        localStorage.removeItem('accessToken');
+        setUser(null);
       })
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (maNV: string, matKhau: string) => {
     const response = await authService.login(maNV, matKhau);
-    localStorage.setItem('accessToken', response.data.accessToken);
+    const token = (response.data as any).access_token || (response.data as any).accessToken;
+    localStorage.setItem('accessToken', token); 
     setUser(response.data.user);
     
-    // Đã thay đổi: Dùng role thay vì isAdmin để điều hướng
-    const isUserAdmin = response.data.user.role.toLowerCase() === 'admin';
-    navigate(isUserAdmin ? '/admin/dashboard' : '/employee/dashboard');
+    const isUserAdmin = String(response.data.user.role).toLowerCase() === 'admin';
+
+    // TUYỆT CHIÊU: Ép trình duyệt chuyển trang cứng và tải lại toàn bộ Template
+    // Dòng này tự động "giết" mọi lỗi kẹt Modal và khôi phục thanh cuộn vàng 100%
+    window.location.href = isUserAdmin ? '/admin/dashboard' : '/employee/dashboard';
   };
 
   const logout = () => {
     localStorage.removeItem('accessToken');
     setUser(null);
-    navigate('/');
+
+    // Ép tải lại từ đầu để trả lại body sạch sẽ cho Trang chủ
+    window.location.href = '/';
   };
 
   const refreshProfile = async () => {
     const response = await authService.profile();
-    setUser(response.data);
+    const userData = response.data?.user || response.data?.data || response.data;
+    setUser(userData);
   };
 
   const value = useMemo(() => ({ user, loading, login, logout, refreshProfile }), [user, loading]);

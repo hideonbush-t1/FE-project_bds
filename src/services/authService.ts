@@ -3,13 +3,13 @@ import { http } from '../api/http';
 export type LoginResponse = {
   accessToken: string;
   user: {
-    id: string;      // Đổi thành string vì trong DB (Prisma) id của NhanVien là VarChar
-    maNV: string;
+    id: string;      
+    maNV: string;    // Backend đã trả về maNV là tenDangNhap, khớp với cái này!
     hoTen: string;
     email: string;
     soDienThoai?: string | null;
     chucVu: string;
-    role: string;    // Đổi isAdmin: boolean thành role: string
+    role: string;    
   };
 };
 

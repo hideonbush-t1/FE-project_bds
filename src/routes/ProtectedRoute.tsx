@@ -18,8 +18,8 @@ export function ProtectedRoute({
     return <Navigate to="/" replace />;
   }
 
-  // Chuyển role thành chữ thường để so sánh an toàn
-  const isUserAdmin = user.role.toLowerCase() === 'admin';
+  // Đã cập nhật: Chỉ cần check 'admin' vì Database đã đồng bộ hoàn toàn
+  const isUserAdmin = String(user.role).toLowerCase() === 'admin';
 
   if (role === 'admin' && !isUserAdmin) {
     return <Navigate to="/employee/dashboard" replace />;

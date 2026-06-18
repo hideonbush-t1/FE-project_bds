@@ -6,6 +6,8 @@ import { HomePage } from './pages/public/HomePage';
 import { NotificationsPage } from './pages/public/NotificationsPage';
 import { SupportPage } from './pages/public/SupportPage';
 import { RegisterPage } from './pages/public/RegisterPage';
+import { SchedulePage } from './pages/public/SchedulePage'; 
+
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminNhanVienPage } from './pages/admin/AdminNhanVienPage';
 import { AdminKhachHangPage } from './pages/admin/AdminKhachHangPage';
@@ -34,8 +36,10 @@ export function App() {
       {/* 1. Các tuyến đường công khai (Public) */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<HomePage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path="/support" element={<SupportPage />} />
+        {/* SỬA TẠI ĐÂY: Đổi sang tiếng Việt cho khớp với thanh Menu */}
+        <Route path="/thong-bao" element={<NotificationsPage />} />
+        <Route path="/lich-lam-viec" element={<SchedulePage />} />
+        <Route path="/ho-tro" element={<SupportPage />} />
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
