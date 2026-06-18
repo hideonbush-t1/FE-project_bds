@@ -11,21 +11,30 @@ import { SchedulePage } from './pages/public/SchedulePage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminNhanVienPage } from './pages/admin/AdminNhanVienPage';
 import { AdminKhachHangPage } from './pages/admin/AdminKhachHangPage';
-import { AdminBatDongSanPage } from './pages/admin/AdminBatDongSanPage';
 import { AdminNhuCauPage } from './pages/admin/AdminNhuCauPage';
 import { AdminGiaoDichPage } from './pages/admin/AdminGiaoDichPage';
 import { AdminThongBaoPage } from './pages/admin/AdminThongBaoPage';
 import { AdminHoSoBieuMauPage } from './pages/admin/AdminHoSoBieuMauPage';
 import { AdminProfilePage } from './pages/admin/AdminProfilePage';
+
 import { EmployeeDashboardPage } from './pages/employee/EmployeeDashboardPage';
-import { EmployeeBatDongSanPage } from './pages/employee/EmployeeBatDongSanPage';
 import { EmployeeNhuCauPage } from './pages/employee/EmployeeNhuCauPage';
 import { EmployeeGiaoDichPage } from './pages/employee/EmployeeGiaoDichPage';
 import { EmployeeThongBaoPage } from './pages/employee/EmployeeThongBaoPage';
 import { EmployeeHoSoBieuMauPage } from './pages/employee/EmployeeHoSoBieuMauPage';
 import { EmployeeProfilePage } from './pages/employee/EmployeeProfilePage';
 
-// --- IMPORT 3 MÀN HÌNH CHỨC NĂNG CỦA BẠN ---
+// ==========================================================
+// 1. IMPORT TỪ CODE MỚI (CHỨC NĂNG BẤT ĐỘNG SẢN)
+// ==========================================================
+import ListBatDongSan from './pages/batdongsan/ListBatDongSan';
+import AddBatDongSan from './pages/batdongsan/AddBatDongSan';
+import EditBatDongSan from './pages/batdongsan/EditBatDongSan';
+import DetailBatDongSan from './pages/batdongsan/DetailBatDongSan';
+
+// ==========================================================
+// 2. IMPORT TỪ CODE CŨ (CHỨC NĂNG KHÁCH HÀNG CỦA BẠN)
+// ==========================================================
 import EmployeeKhachHangPage from './pages/employee/EmployeeKhachHangPage';
 import ThemKhachHang from './pages/employee/khachhang/ThemKhachHang';
 import ChiTietKhachHang from './pages/employee/khachhang/ChiTietKhachHang';
@@ -36,22 +45,27 @@ export function App() {
       {/* 1. Các tuyến đường công khai (Public) */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<HomePage />} />
-        {/* SỬA TẠI ĐÂY: Đổi sang tiếng Việt cho khớp với thanh Menu */}
         <Route path="/thong-bao" element={<NotificationsPage />} />
         <Route path="/lich-lam-viec" element={<SchedulePage />} />
         <Route path="/ho-tro" element={<SupportPage />} />
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
-      {/* 2. Các tuyến đường cho Quản trị viên (Admin) - Tạm gỡ ProtectedRoute */}
+      {/* 2. Các tuyến đường cho Quản trị viên (Admin) */}
       <Route
         path="/admin"
-        element={<AdminLayout />}
+        element={<AdminLayout />} 
       >
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="nhan-vien" element={<AdminNhanVienPage />} />
         <Route path="khach-hang" element={<AdminKhachHangPage />} />
-        <Route path="bat-dong-san" element={<AdminBatDongSanPage />} />
+        
+        {/* Quản lý Bất Động Sản (Từ code mới) */}
+        <Route path="bat-dong-san" element={<ListBatDongSan />} />
+        <Route path="bat-dong-san/add" element={<AddBatDongSan />} />
+        <Route path="bat-dong-san/edit/:id" element={<EditBatDongSan />} />
+        <Route path="bat-dong-san/detail/:id" element={<DetailBatDongSan />} />
+
         <Route path="nhu-cau" element={<AdminNhuCauPage />} />
         <Route path="giao-dich" element={<AdminGiaoDichPage />} />
         <Route path="thong-bao" element={<AdminThongBaoPage />} />
@@ -59,19 +73,24 @@ export function App() {
         <Route path="profile" element={<AdminProfilePage />} />
       </Route>
 
-      {/* 3. Các tuyến đường cho Nhân viên (Employee) - Tạm gỡ ProtectedRoute để bạn làm việc */}
+      {/* 3. Các tuyến đường cho Nhân viên (Employee) - Tạm gỡ ProtectedRoute */}
       <Route
         path="/employee"
         element={<EmployeeLayout />}
       >
         <Route path="dashboard" element={<EmployeeDashboardPage />} />
         
-        {/* Khu vực xử lý tính năng Quản lý Khách hàng của bạn (Chuẩn SRS v4.0) */}
+        {/* Khu vực xử lý tính năng Quản lý Khách hàng của bạn (Từ code cũ) */}
         <Route path="khach-hang" element={<EmployeeKhachHangPage />} />
         <Route path="khach-hang/create" element={<ThemKhachHang />} />
         <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
         
-        <Route path="bat-dong-san" element={<EmployeeBatDongSanPage />} />
+        {/* Khu vực xử lý tính năng Quản lý Bất động sản (Từ code mới) */}
+        <Route path="bat-dong-san" element={<ListBatDongSan />} />
+        <Route path="bat-dong-san/add" element={<AddBatDongSan />} />
+        <Route path="bat-dong-san/edit/:id" element={<EditBatDongSan />} />
+        <Route path="bat-dong-san/detail/:id" element={<DetailBatDongSan />} />
+
         <Route path="nhu-cau" element={<EmployeeNhuCauPage />} />
         <Route path="giao-dich" element={<EmployeeGiaoDichPage />} />
         <Route path="thong-bao" element={<EmployeeThongBaoPage />} />

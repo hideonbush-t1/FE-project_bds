@@ -2,8 +2,9 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 
+// Cập nhật lại Type cho khớp 100% với dữ liệu Backend trả về
 type User = {
-  id: string; 
+  id: string;
   maNV: string;
   hoTen: string;
   email: string;
@@ -49,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (maNV: string, matKhau: string) => {
+    // 1. Gọi API
     const response = await authService.login(maNV, matKhau);
     
     // Lưu token
