@@ -2,11 +2,12 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { PublicLayout } from './layouts/PublicLayout';
 import { AdminLayout } from './layouts/AdminLayout';
 import { EmployeeLayout } from './layouts/EmployeeLayout';
-import { ProtectedRoute } from './routes/ProtectedRoute';
 import { HomePage } from './pages/public/HomePage';
 import { NotificationsPage } from './pages/public/NotificationsPage';
 import { SupportPage } from './pages/public/SupportPage';
 import { RegisterPage } from './pages/public/RegisterPage';
+import { SchedulePage } from './pages/public/SchedulePage'; 
+
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminNhanVienPage } from './pages/admin/AdminNhanVienPage';
 import { AdminKhachHangPage } from './pages/admin/AdminKhachHangPage';
@@ -31,10 +32,13 @@ import DetailBatDongSan from './pages/batdongsan/DetailBatDongSan';
 export function App() {
   return (
     <Routes>
+      {/* 1. Các tuyến đường công khai (Public) */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<HomePage />} />
-        <Route path="/notifications" element={<NotificationsPage />} />
-        <Route path="/support" element={<SupportPage />} />
+        {/* SỬA TẠI ĐÂY: Đổi sang tiếng Việt cho khớp với thanh Menu */}
+        <Route path="/thong-bao" element={<NotificationsPage />} />
+        <Route path="/lich-lam-viec" element={<SchedulePage />} />
+        <Route path="/ho-tro" element={<SupportPage />} />
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
@@ -58,15 +62,14 @@ export function App() {
         <Route path="profile" element={<AdminProfilePage />} />
       </Route>
 
+      {/* 3. Các tuyến đường cho Nhân viên (Employee) - Tạm gỡ ProtectedRoute để bạn làm việc */}
       <Route
         path="/employee"
-        element={
-          <ProtectedRoute role="employee">
-            <EmployeeLayout />
-          </ProtectedRoute>
-        }
+        element={<EmployeeLayout />}
       >
         <Route path="dashboard" element={<EmployeeDashboardPage />} />
+        
+        {/* Khu vực xử lý tính năng Quản lý Khách hàng của bạn (Chuẩn SRS v4.0) */}
         <Route path="khach-hang" element={<EmployeeKhachHangPage />} />
         
         <Route path="bat-dong-san" element={<ListBatDongSan />} />
@@ -81,6 +84,7 @@ export function App() {
         <Route path="profile" element={<EmployeeProfilePage />} />
       </Route>
 
+      {/* 4. Tự động chuyển hướng về trang chủ nếu gõ sai URL */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

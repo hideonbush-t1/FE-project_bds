@@ -12,7 +12,10 @@ export function AppHeader() {
       <div className="app-header-user">
         <div>
           <div className="fw-semibold">{user?.hoTen}</div>
-          <div className="text-muted small">{user?.isAdmin ? 'Admin' : 'Nhân viên'}</div>
+          {/* Đã thay đổi: Dùng role thay vì isAdmin */}
+          <div className="text-muted small">
+            {String(user?.Role || user?.role).toLowerCase() === 'admin' ? 'Admin' : 'Nhân viên'}
+          </div>
         </div>
         <button className="btn btn-outline-light btn-sm" onClick={logout}>
           Đăng xuất

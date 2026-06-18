@@ -10,7 +10,8 @@ type User = {
   email: string;
   soDienThoai?: string | null;
   chucVu: string;
-  role: string; // Đã sửa từ isAdmin thành role
+  role?: string; 
+  Role?: string; 
 };
 
 type AuthContextValue = {
@@ -37,10 +38,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     authService
       .profile()
-      .then((response) => setUser(response.data))
+      .then((response) => {
+        // Bao phủ mọi trường hợp cấu trúc dữ liệu Backend trả về
+        const userData = response.data?.user || response.data?.data || response.data;
+        setUser(userData as User); // Ép kiểu an toàn khi set user
+      })
       .catch(() => {
-        localStorage.removeItem('accessToken');
-        setUser(null);
+        // Giữ token để thử lại sau
       })
       .finally(() => setLoading(false));
   }, []);
@@ -49,32 +53,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 1. Gọi API
     const response = await authService.login(maNV, matKhau);
     
-    // 2. Ép kiểu dữ liệu sang any để TypeScript ngừng gạch đỏ
-    const data: any = response.data; 
+    // Lưu token
+    localStorage.setItem('accessToken', response.data.access_token);
     
-    // 3. Lấy đúng tên biến access_token (có dấu gạch dưới) từ Backend
-    localStorage.setItem('accessToken', data.access_token);
+    // Lưu user an toàn
+    const userData = response.data.user as User;
+    setUser(userData);
     
-    // 4. Cập nhật state User
-    setUser(data.user);
+    // Chuẩn hóa role
+    const role = String(userData?.Role || userData?.role).toLowerCase();
     
-    // 5. Điều hướng chuẩn xác dựa trên trường 'role'
-    if (data.user?.role === 'admin') {
-      navigate('/admin/dashboard');
+    console.log("Role nhận được là:", role);
+
+    // ========================================================
+    // 🧹 DIỆT TẬN GỐC MÀN ĐEN BOOTSTRAP TRƯỚC KHI CHUYỂN TRANG
+    // ========================================================
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+    // ========================================================
+    
+    // Kiểm tra: Nếu là 'admin' hoặc số '1' thì điều hướng sang admin
+    if (role === 'admin' || role === '1') {
+      console.log("Đang điều hướng tới Admin Dashboard...");
+      navigate('/admin/dashboard', { replace: true }); 
     } else {
-      navigate('/employee/dashboard');
+      console.log("Đang điều hướng tới Employee Dashboard...");
+      navigate('/employee/dashboard', { replace: true });
     }
   };
 
   const logout = () => {
     localStorage.removeItem('accessToken');
     setUser(null);
-    navigate('/');
+
+    // Ép tải lại từ đầu để trả lại body sạch sẽ cho Trang chủ
+    window.location.href = '/';
   };
 
   const refreshProfile = async () => {
     const response = await authService.profile();
-    setUser(response.data);
+    const userData = response.data?.user || response.data?.data || response.data;
+    setUser(userData as User); // Ép kiểu an toàn khi refresh
   };
 
   const value = useMemo(() => ({ user, loading, login, logout, refreshProfile }), [user, loading]);
