@@ -9,7 +9,7 @@ type User = {
   email: string;
   soDienThoai?: string | null;
   chucVu: string;
-  role: string; 
+  role: string | number; // Chấp nhận cả chuỗi hoặc số từ Backend
 };
 
 type AuthContextValue = {
@@ -42,24 +42,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(userData);
       })
       .catch(() => {
-        // SỬA: Nếu lấy profile thất bại (do token 'undefined' hoặc hết hạn), xóa luôn token để tránh kẹt
-        localStorage.removeItem('accessToken');
-        setUser(null);
+        // Giữ token để thử lại sau
       })
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (maNV: string, matKhau: string) => {
     const response = await authService.login(maNV, matKhau);
-    const token = (response.data as any).access_token || (response.data as any).accessToken;
-    localStorage.setItem('accessToken', token); 
-    setUser(response.data.user);
     
-    const isUserAdmin = String(response.data.user.role).toLowerCase() === 'admin';
-
-    // TUYỆT CHIÊU: Ép trình duyệt chuyển trang cứng và tải lại toàn bộ Template
-    // Dòng này tự động "giết" mọi lỗi kẹt Modal và khôi phục thanh cuộn vàng 100%
-    window.location.href = isUserAdmin ? '/admin/dashboard' : '/employee/dashboard';
+    // Lưu token
+    localStorage.setItem('accessToken', response.data.access_token);
+    
+    // Lưu user
+    const userData = response.data.user;
+    setUser(userData);
+    
+    // Chuẩn hóa role về chuỗi để so sánh
+    const role = String(userData.role).toLowerCase();
+    
+    console.log("Role nhận được là:", role);
+    
+    // Kiểm tra: Nếu là 'admin' hoặc số '1' thì điều hướng sang admin
+    if (role === 'admin' || role === '1') {
+      console.log("Đang điều hướng tới Admin Dashboard...");
+      navigate('/admin/dashboard', { replace: true }); 
+    } else {
+      console.log("Đang điều hướng tới Employee Dashboard...");
+      navigate('/employee/dashboard', { replace: true });
+    }
   };
 
   const logout = () => {
