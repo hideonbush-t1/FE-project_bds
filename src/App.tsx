@@ -1,3 +1,5 @@
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { PublicLayout } from './layouts/PublicLayout';
 import { AdminLayout } from './layouts/AdminLayout';
@@ -41,6 +43,7 @@ import ChiTietKhachHang from './pages/employee/khachhang/ChiTietKhachHang';
 
 export function App() {
   return (
+    <> {/* 💡 Thêm dấu ngoặc nhọn này để bọc tất cả lại */}
     <Routes>
       {/* 1. Các tuyến đường công khai (Public) */}
       <Route element={<PublicLayout />}>
@@ -105,5 +108,9 @@ export function App() {
       {/* 4. Tự động chuyển hướng về trang chủ nếu gõ sai URL */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+
+    {/* 💡 BƯỚC QUAN TRỌNG: Đặt cục ToastContainer ở cuối cùng */}
+      <ToastContainer position="top-right" autoClose={3000} />
+    </>
   );
 }

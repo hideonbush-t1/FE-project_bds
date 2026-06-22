@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { toast } from 'react-toastify'; // 💡 BƯỚC 1: Thêm import thư viện pop-up
 
-// Cập nhật lại Type cho khớp 100% với dữ liệu Backend trả về
 type User = {
   id: string;
   maNV: string;
@@ -39,57 +39,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authService
       .profile()
       .then((response) => {
-        // Bao phủ mọi trường hợp cấu trúc dữ liệu Backend trả về
         const userData = response.data?.user || response.data?.data || response.data;
-        setUser(userData as User); // Ép kiểu an toàn khi set user
+        setUser(userData as User);
       })
-      .catch(() => {
-        // Giữ token để thử lại sau
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (maNV: string, matKhau: string) => {
-    // 1. Gọi API
     const response = await authService.login(maNV, matKhau);
-    
-    // Lưu token
     localStorage.setItem('accessToken', response.data.access_token);
     
-    // Lưu user an toàn
     const userData = response.data.user as User;
     setUser(userData);
     
-    // Chuẩn hóa role
     const role = String(userData?.Role || userData?.role).toLowerCase();
-    
-    console.log("Role nhận được là:", role);
 
-    // ========================================================
-    // 🧹 DIỆT TẬN GỐC MÀN ĐEN VÀ ÉP HIỆN LẠI THANH CUỘN
-    // ========================================================
-    // 1. Xóa class khóa cuộn của Bootstrap
+    // Diệt màn đen... (giữ nguyên code của bạn)
     document.body.classList.remove('modal-open');
-    
-    // 2. Ép buộc thẻ <body> và <html> phải hiện lại thanh cuộn tự động
     document.body.style.overflow = 'auto';
     document.documentElement.style.overflow = 'auto';
-    
-    // 3. Xóa phần đệm lề phải dư thừa (do Bootstrap chèn vào để bù độ rộng thanh cuộn)
     document.body.style.paddingRight = '0px';
     document.documentElement.style.paddingRight = '0px';
-    
-    // 4. Tiêu diệt màn đen
     const backdrops = document.querySelectorAll('.modal-backdrop');
     backdrops.forEach(backdrop => backdrop.remove());
-    // ========================================================
-    
-    // Kiểm tra: Nếu là 'admin' hoặc số '1' thì điều hướng sang admin
+
+    // 💡 BƯỚC 2: Bắn pop-up thành công
+    toast.success('Đăng nhập thành công!');
+
     if (role === 'admin' || role === '1') {
-      console.log("Đang điều hướng tới Admin Dashboard...");
       navigate('/admin/dashboard', { replace: true }); 
     } else {
-      console.log("Đang điều hướng tới Employee Dashboard...");
       navigate('/employee/dashboard', { replace: true });
     }
   };
@@ -98,14 +78,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('accessToken');
     setUser(null);
 
-    // Ép tải lại từ đầu để trả lại body sạch sẽ cho Trang chủ
-    window.location.href = '/';
+    // 💡 BƯỚC 3: Bắn pop-up đăng xuất
+    toast.success('Đăng xuất thành công!');
+
+    // Delay 0.8 giây để pop-up kịp hiện ra cho người dùng nhìn thấy trước khi F5 trang
+    setTimeout(() => {
+      window.location.href = '/login'; // Sửa '/' thành '/login' để đá về thẳng trang đăng nhập
+    }, 800);
   };
 
   const refreshProfile = async () => {
     const response = await authService.profile();
     const userData = response.data?.user || response.data?.data || response.data;
-    setUser(userData as User); // Ép kiểu an toàn khi refresh
+    setUser(userData as User);
   };
 
   const value = useMemo(() => ({ user, loading, login, logout, refreshProfile }), [user, loading]);
