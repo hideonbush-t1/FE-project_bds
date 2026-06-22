@@ -34,7 +34,7 @@ import AddBatDongSan from './pages/batdongsan/AddBatDongSan';
 import EditBatDongSan from './pages/batdongsan/EditBatDongSan';
 import DetailBatDongSan from './pages/batdongsan/DetailBatDongSan';
 
-// Chức năng Khách hàng (của bạn)
+// Chức năng Khách hàng
 import EmployeeKhachHangPage from './pages/employee/EmployeeKhachHangPage';
 import ThemKhachHang from './pages/employee/khachhang/ThemKhachHang';
 import ChiTietKhachHang from './pages/employee/khachhang/ChiTietKhachHang';
@@ -52,7 +52,7 @@ export function App() {
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
-      {/* 2. Tuyến đường cho Quản trị viên (Admin) */}
+      {/* 2. Các tuyến đường cho Quản trị viên (Admin) */}
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="nhan-vien" element={<AdminNhanVienPage />} />
@@ -72,11 +72,11 @@ export function App() {
         <Route path="profile" element={<AdminProfilePage />} />
       </Route>
 
-      {/* 3. Tuyến đường cho Nhân viên (Employee) */}
+      {/* 3. Các tuyến đường cho Nhân viên (Employee) */}
       <Route path="/employee" element={<EmployeeLayout />}>
         <Route path="dashboard" element={<EmployeeDashboardPage />} />
         
-        {/* Quản lý Khách hàng */}
+        {/* Khu vực quản lý Khách hàng */}
         <Route path="khach-hang" element={<EmployeeKhachHangPage />} />
         <Route path="khach-hang/create" element={<ThemKhachHang />} />
         <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
@@ -95,6 +95,7 @@ export function App() {
         <Route path="profile" element={<EmployeeProfilePage />} />
       </Route>
 
+      {/* 4. Tự động chuyển hướng */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

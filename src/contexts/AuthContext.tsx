@@ -10,8 +10,7 @@ type User = {
   email: string;
   soDienThoai?: string | null;
   chucVu: string;
-  role?: string; 
-  Role?: string; 
+  role: string | number;
 };
 
 type AuthContextValue = {
@@ -26,7 +25,11 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  // Khởi tạo state từ localStorage để giữ trạng thái khi F5
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,10 +44,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then((response) => {
         // Bao phủ mọi trường hợp cấu trúc dữ liệu Backend trả về
         const userData = response.data?.user || response.data?.data || response.data;
-        setUser(userData as User); // Ép kiểu an toàn khi set user
+        setUser(userData as User);
+        localStorage.setItem('user', JSON.stringify(userData));
       })
       .catch(() => {
-        // Giữ token để thử lại sau
+        localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
       })
       .finally(() => setLoading(false));
   }, []);
@@ -53,59 +58,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 1. Gọi API
     const response = await authService.login(maNV, matKhau);
     
-    // Lưu token
+    // Lưu token và user
     localStorage.setItem('accessToken', response.data.access_token);
     
     // Lưu user an toàn
-    const userData = response.data.user as User;
+    const userData = (response.data.user || response.data) as User;
     setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
     
-    // Chuẩn hóa role
-    const role = String(userData?.Role || userData?.role).toLowerCase();
+    // Chuẩn hóa role để điều hướng
+    const role = String(userData?.role || '').toLowerCase();
     
-    console.log("Role nhận được là:", role);
-
-    // ========================================================
-    // 🧹 DIỆT TẬN GỐC MÀN ĐEN VÀ ÉP HIỆN LẠI THANH CUỘN
-    // ========================================================
-    // 1. Xóa class khóa cuộn của Bootstrap
+    // Dọn dẹp DOM (loại bỏ màn đen modal nếu có)
     document.body.classList.remove('modal-open');
-    
-    // 2. Ép buộc thẻ <body> và <html> phải hiện lại thanh cuộn tự động
     document.body.style.overflow = 'auto';
-    document.documentElement.style.overflow = 'auto';
-    
-    // 3. Xóa phần đệm lề phải dư thừa (do Bootstrap chèn vào để bù độ rộng thanh cuộn)
-    document.body.style.paddingRight = '0px';
-    document.documentElement.style.paddingRight = '0px';
-    
-    // 4. Tiêu diệt màn đen
     const backdrops = document.querySelectorAll('.modal-backdrop');
     backdrops.forEach(backdrop => backdrop.remove());
-    // ========================================================
     
-    // Kiểm tra: Nếu là 'admin' hoặc số '1' thì điều hướng sang admin
+    // Điều hướng
     if (role === 'admin' || role === '1') {
-      console.log("Đang điều hướng tới Admin Dashboard...");
       navigate('/admin/dashboard', { replace: true }); 
     } else {
-      console.log("Đang điều hướng tới Employee Dashboard...");
       navigate('/employee/dashboard', { replace: true });
     }
   };
 
   const logout = () => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
     setUser(null);
-
-    // Ép tải lại từ đầu để trả lại body sạch sẽ cho Trang chủ
     window.location.href = '/';
   };
 
   const refreshProfile = async () => {
     const response = await authService.profile();
     const userData = response.data?.user || response.data?.data || response.data;
-    setUser(userData as User); // Ép kiểu an toàn khi refresh
+    setUser(userData as User);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   const value = useMemo(() => ({ user, loading, login, logout, refreshProfile }), [user, loading]);

@@ -11,7 +11,7 @@ export default function ChiTietKhachHang() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Tự động kiểm tra URL để điều hướng đúng
+  // Logic kiểm tra URL để quay lại đúng trang Admin hoặc Employee
   const isRouteAdmin = location.pathname.includes('/admin');
   const backUrl = isRouteAdmin ? '/admin/khach-hang' : '/employee/khach-hang';
 
@@ -70,7 +70,7 @@ export default function ChiTietKhachHang() {
         </div>
 
         <button 
-          onClick={() => navigate(backUrl)} // Sử dụng biến backUrl đã cấu hình
+          onClick={() => navigate(backUrl)} 
           style={{ 
             marginTop: '30px', 
             width: '100%', 
