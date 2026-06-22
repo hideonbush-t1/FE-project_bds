@@ -5,13 +5,13 @@ import { http } from '../../../api/http';
 export default function ChiTietKhachHang() {
   const { id } = useParams(); 
   const navigate = useNavigate();
-  const location = useLocation(); // Thêm hook này để đọc địa chỉ URL hiện tại
+  const location = useLocation();
   
   const [khachHang, setKhachHang] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // MẸO Ở ĐÂY: Tự động kiểm tra URL xem có chữ 'admin' không
+  // Tự động kiểm tra URL để điều hướng đúng
   const isRouteAdmin = location.pathname.includes('/admin');
   const backUrl = isRouteAdmin ? '/admin/khach-hang' : '/employee/khach-hang';
 
@@ -22,14 +22,11 @@ export default function ChiTietKhachHang() {
         setLoading(false);
         return;
       }
-
       try {
-        const res = await http.get(`http://localhost:4000/khach-hang/${id}`);
+        const res = await http.get(`/khach-hang/${id}`);
         setKhachHang(res.data);
       } catch (error: any) {
-        console.error("Lỗi khi tải chi tiết khách hàng:", error);
-        const message = error.response?.data?.message || error.message || 'Không thể tải chi tiết hồ sơ.';
-        setError(typeof message === 'string' ? message : JSON.stringify(message));
+        setError('Không thể tải chi tiết hồ sơ.');
       } finally {
         setLoading(false);
       }
@@ -37,29 +34,61 @@ export default function ChiTietKhachHang() {
     fetchChiTiet();
   }, [id]);
 
-  if (loading) return <div style={{ padding: '20px', color: '#fff' }}>⏳ Đang tải dữ liệu hồ sơ từ NestJS...</div>;
-  if (error) return <div style={{ padding: '20px', color: '#c00' }}>❌ {error}</div>;
+  if (loading) return <div style={{ padding: '40px', color: '#fff', textAlign: 'center' }}>⏳ Đang tải...</div>;
+  if (error) return <div style={{ padding: '40px', color: '#e74c3c', textAlign: 'center' }}>❌ {error}</div>;
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Chưa cập nhật';
+    return new Date(dateString).toLocaleDateString('vi-VN');
+  };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '600px', fontFamily: 'Arial, sans-serif', color: '#111' }}>
-      <h2 style={{ color: '#fafafa' }}>🔍 CHI TIẾT HỒ SƠ KHÁCH HÀNG </h2>
-      <div style={{ border: '1px solid #ddd', padding: '20px', borderRadius: '6px', backgroundColor: '#1671cc', lineHeight: '2', color: '#111' }}>
-        <p><strong>Mã Khách Hàng:</strong> <span style={{ color: '#0070f3', fontWeight: 'bold' }}>{khachHang.maKH}</span></p> 
-        <p><strong>Họ và tên:</strong> {khachHang.hoTen}</p>
-        <p><strong>Nhu cầu:</strong> {khachHang.loaiKH}</p>
-        <p><strong>Số điện thoại:</strong> {khachHang.soDienThoai}</p>
-        <p><strong>Số CMND/CCCD:</strong> {khachHang.soCMND || 'Trống'}</p>
-        <p><strong>Địa chỉ:</strong> {khachHang.diaChi}</p>
-        <p><strong>Mã NV quản lý phụ trách:</strong> {khachHang.nhanVienId || 'Chưa phân công'}</p>
+    <div style={{ padding: '40px 20px', backgroundColor: '#1a1c23', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: '600px', backgroundColor: '#252830', padding: '30px', borderRadius: '8px', border: '1px solid #3d4149', color: '#fff' }}>
+        <h2 style={{ color: '#f1c40f', borderBottom: '2px solid #333', paddingBottom: '10px', textAlign: 'center', marginBottom: '25px' }}>
+          🔍 CHI TIẾT KHÁCH HÀNG
+        </h2>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          {[
+            { label: 'Mã Khách Hàng', value: khachHang.id },
+            { label: 'Họ và tên', value: khachHang.hoTen },
+            { label: 'Ngày sinh', value: formatDate(khachHang.ngaySinh) },
+            { label: 'Giới tính', value: khachHang.gioiTinh },
+            { label: 'Nhu cầu', value: khachHang.loaiKH },
+            { label: 'Số điện thoại', value: khachHang.soDienThoai },
+            { label: 'Email', value: khachHang.email || 'Chưa cập nhật' },
+            { label: 'Số CMND/CCCD', value: khachHang.soCMND || 'Trống' },
+            { label: 'Địa chỉ', value: khachHang.diaChi || 'Chưa cập nhật' },
+            { label: 'Mã NV quản lý', value: khachHang.nhanVienId || 'Chưa phân công' },
+          ].map((item, index) => (
+            <div key={index} style={{ display: 'flex', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
+              <strong style={{ width: '160px', color: '#bdc3c7' }}>{item.label}:</strong>
+              <span style={{ color: '#fff', wordBreak: 'break-word' }}>{item.value}</span>
+            </div>
+          ))}
+        </div>
+
+        <button 
+          onClick={() => navigate(backUrl)} // Sử dụng biến backUrl đã cấu hình
+          style={{ 
+            marginTop: '30px', 
+            width: '100%', 
+            padding: '12px', 
+            backgroundColor: '#333', 
+            color: '#fff', 
+            border: 'none', 
+            borderRadius: '4px', 
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            transition: '0.3s'
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#444')}
+          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#333')}
+        >
+          ⬅ QUAY LẠI DANH SÁCH
+        </button>
       </div>
-      
-      {/* Nút bấm tự động điều hướng đúng quyền */}
-      <button 
-        onClick={() => navigate(backUrl)} 
-        style={{ marginTop: '20px', padding: '10px 20px', cursor: 'pointer' }}
-      >
-        ⬅ Quay Lại Danh Sách
-      </button>
     </div>
   );
 }

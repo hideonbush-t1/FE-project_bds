@@ -2,12 +2,15 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { PublicLayout } from './layouts/PublicLayout';
 import { AdminLayout } from './layouts/AdminLayout';
 import { EmployeeLayout } from './layouts/EmployeeLayout';
+
+// Các trang Public
 import { HomePage } from './pages/public/HomePage';
 import { NotificationsPage } from './pages/public/NotificationsPage';
 import { SupportPage } from './pages/public/SupportPage';
 import { RegisterPage } from './pages/public/RegisterPage';
 import { SchedulePage } from './pages/public/SchedulePage'; 
 
+// Các trang Admin
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminNhanVienPage } from './pages/admin/AdminNhanVienPage';
 import { AdminKhachHangPage } from './pages/admin/AdminKhachHangPage';
@@ -17,6 +20,7 @@ import { AdminThongBaoPage } from './pages/admin/AdminThongBaoPage';
 import { AdminHoSoBieuMauPage } from './pages/admin/AdminHoSoBieuMauPage';
 import { AdminProfilePage } from './pages/admin/AdminProfilePage';
 
+// Các trang Employee
 import { EmployeeDashboardPage } from './pages/employee/EmployeeDashboardPage';
 import { EmployeeNhuCauPage } from './pages/employee/EmployeeNhuCauPage';
 import { EmployeeGiaoDichPage } from './pages/employee/EmployeeGiaoDichPage';
@@ -24,25 +28,22 @@ import { EmployeeThongBaoPage } from './pages/employee/EmployeeThongBaoPage';
 import { EmployeeHoSoBieuMauPage } from './pages/employee/EmployeeHoSoBieuMauPage';
 import { EmployeeProfilePage } from './pages/employee/EmployeeProfilePage';
 
-// ==========================================================
-// 1. IMPORT TỪ CODE MỚI (CHỨC NĂNG BẤT ĐỘNG SẢN)
-// ==========================================================
+// Chức năng Bất động sản
 import ListBatDongSan from './pages/batdongsan/ListBatDongSan';
 import AddBatDongSan from './pages/batdongsan/AddBatDongSan';
 import EditBatDongSan from './pages/batdongsan/EditBatDongSan';
 import DetailBatDongSan from './pages/batdongsan/DetailBatDongSan';
 
-// ==========================================================
-// 2. IMPORT TỪ CODE CŨ (CHỨC NĂNG KHÁCH HÀNG CỦA BẠN)
-// ==========================================================
+// Chức năng Khách hàng (của bạn)
 import EmployeeKhachHangPage from './pages/employee/EmployeeKhachHangPage';
 import ThemKhachHang from './pages/employee/khachhang/ThemKhachHang';
 import ChiTietKhachHang from './pages/employee/khachhang/ChiTietKhachHang';
+import SuaKhachHang from './pages/employee/khachhang/SuaKhachHang';
 
 export function App() {
   return (
     <Routes>
-      {/* 1. Các tuyến đường công khai (Public) */}
+      {/* 1. Các tuyến đường công khai */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/thong-bao" element={<NotificationsPage />} />
@@ -51,20 +52,14 @@ export function App() {
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
-      {/* 2. Các tuyến đường cho Quản trị viên (Admin) */}
-      <Route
-        path="/admin"
-        element={<AdminLayout />} 
-      >
+      {/* 2. Tuyến đường cho Quản trị viên (Admin) */}
+      <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="nhan-vien" element={<AdminNhanVienPage />} />
-        
-        {/* ĐÃ SỬA: Đủ 3 route cho Khách Hàng (Danh sách, Thêm, Chi tiết) */}
         <Route path="khach-hang" element={<AdminKhachHangPage />} />
         <Route path="khach-hang/create" element={<ThemKhachHang />} />
         <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
         
-        {/* Quản lý Bất Động Sản (Từ code mới) */}
         <Route path="bat-dong-san" element={<ListBatDongSan />} />
         <Route path="bat-dong-san/add" element={<AddBatDongSan />} />
         <Route path="bat-dong-san/edit/:id" element={<EditBatDongSan />} />
@@ -77,19 +72,17 @@ export function App() {
         <Route path="profile" element={<AdminProfilePage />} />
       </Route>
 
-      {/* 3. Các tuyến đường cho Nhân viên (Employee) - Tạm gỡ ProtectedRoute */}
-      <Route
-        path="/employee"
-        element={<EmployeeLayout />}
-      >
+      {/* 3. Tuyến đường cho Nhân viên (Employee) */}
+      <Route path="/employee" element={<EmployeeLayout />}>
         <Route path="dashboard" element={<EmployeeDashboardPage />} />
         
-        {/* Khu vực xử lý tính năng Quản lý Khách hàng của bạn (Từ code cũ) */}
+        {/* Quản lý Khách hàng */}
         <Route path="khach-hang" element={<EmployeeKhachHangPage />} />
         <Route path="khach-hang/create" element={<ThemKhachHang />} />
         <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
+        <Route path="khach-hang/edit/:id" element={<SuaKhachHang />} />
         
-        {/* Khu vực xử lý tính năng Quản lý Bất động sản (Từ code mới) */}
+        {/* Quản lý Bất động sản */}
         <Route path="bat-dong-san" element={<ListBatDongSan />} />
         <Route path="bat-dong-san/add" element={<AddBatDongSan />} />
         <Route path="bat-dong-san/edit/:id" element={<EditBatDongSan />} />
@@ -102,7 +95,6 @@ export function App() {
         <Route path="profile" element={<EmployeeProfilePage />} />
       </Route>
 
-      {/* 4. Tự động chuyển hướng về trang chủ nếu gõ sai URL */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

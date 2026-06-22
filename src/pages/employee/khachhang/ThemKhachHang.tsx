@@ -1,48 +1,65 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom'; // Thêm useLocation
+import { useNavigate, useLocation } from 'react-router-dom';
 import { http } from '../../../api/http';
-import toast, { Toaster } from 'react-hot-toast';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function ThemKhachHang() {
   const navigate = useNavigate();
-  const location = useLocation(); // Lấy URL hiện tại
+  const location = useLocation();
   
   const [existingCCCD, setExistingCCCD] = useState<string[]>([]);
+  const [existingEmails, setExistingEmails] = useState<string[]>([]);
+
   const [formData, setFormData] = useState({
-    maKH: 'Đang tải...', 
-    loaiKH: 'Mua', 
-    hoTen: '', 
+    maKH: 'Đang tải...',
+    loaiKH: 'Mua',
+    hoTen: '',
     gioiTinh: 'Nam',
-    ngaySinh: '', 
-    diaChi: '', 
-    soDienThoai: '', 
+    ngaySinh: '',
+    diaChi: '',
+    soDienThoai: '',
     email: '',
-    nhanVienId: '', 
+    nhanVienId: '',
     soCMND: ''
   });
 
-  // MẸO: Nhận diện Admin hay Nhân viên để quay lại cho chuẩn
+  // Nhận diện Admin hay Nhân viên để quay lại cho chuẩn
   const isRouteAdmin = location.pathname.includes('/admin');
   const backUrl = isRouteAdmin ? '/admin/khach-hang' : '/employee/khach-hang';
 
-  const labelStyle = { fontWeight: 'bold', color: '#000', marginBottom: '5px', display: 'block' };
-  const inputStyle = { width: '100%', padding: '10px', border: '1px solid #333', borderRadius: '4px', color: '#000', backgroundColor: '#fff' };
+  const labelStyle = { fontWeight: 'bold', color: '#fff', marginBottom: '8px', display: 'block' };
+  const inputStyle = { 
+    width: '100%', 
+    padding: '12px', 
+    border: '1px solid #3d4149', 
+    borderRadius: '4px', 
+    color: '#fff', 
+    backgroundColor: '#252830', 
+    boxSizing: 'border-box' as const 
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const userRaw = localStorage.getItem('user');
+        const user = userRaw ? JSON.parse(userRaw) : null;
+
         const res = await http.get('/khach-hang');
         const list = res.data;
         const maxCode = list.reduce((max: number, kh: any) => Math.max(max, parseInt(kh.id?.replace('KH', '') || 0)), 0);
         
         setExistingCCCD(list.map((kh: any) => kh.soCMND).filter(Boolean));
+        setExistingEmails(list.map((kh: any) => kh.email).filter(Boolean));
+
         setFormData(prev => ({
           ...prev,
           maKH: `KH${(maxCode + 1).toString().padStart(3, '0')}`,
-          nhanVienId: user.id || 'NV_CHUA_XAC_DINH'
+          nhanVienId: user?.maNV || 'NV_CHUA_XAC_DINH'
         }));
-      } catch (err) { console.error(err); }
+      } catch (err) { 
+        toast.error("Không thể tải dữ liệu hệ thống!"); 
+      }
     };
     fetchData();
   }, []);
@@ -53,69 +70,108 @@ export default function ThemKhachHang() {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    
     if (existingCCCD.includes(formData.soCMND.trim())) {
-      toast.error("Số CMND/CCCD này đã tồn tại!");
+      toast.error("Số CMND/CCCD này đã tồn tại trong hệ thống!");
       return;
     }
 
-    const submitData: any = {
-      maKH: formData.maKH,
-      loaiKH: formData.loaiKH,
-      hoTen: formData.hoTen,
-      gioiTinh: formData.gioiTinh,
-      soDienThoai: formData.soDienThoai,
-      soCMND: formData.soCMND,
-      nhanVienId: formData.nhanVienId,
-      diaChi: formData.diaChi
+    if (formData.email.trim() !== "" && existingEmails.includes(formData.email.trim())) {
+      toast.error("Email này đã tồn tại trong hệ thống!");
+      return;
+    }
+
+    const payload = {
+      ...formData,
+      ngaySinh: formData.ngaySinh ? new Date(formData.ngaySinh).toISOString() : new Date().toISOString()
     };
 
-    if (formData.ngaySinh) submitData.ngaySinh = formData.ngaySinh;
-    if (formData.email) submitData.email = formData.email;
-
     try {
-      await http.post('/khach-hang', submitData);
+      await http.post('/khach-hang', payload);
       toast.success('Thêm khách hàng thành công!');
-      // SỬA TẠI ĐÂY: Dùng backUrl để điều hướng động
       setTimeout(() => navigate(backUrl), 1500); 
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra!');
+      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi thêm khách hàng!';
+      toast.error(errorMessage);
     }
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '600px', margin: '20px auto', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', border: '1px solid #ddd' }}>
-      <Toaster position="top-center" />
-      <h2 style={{ color: '#28a745', borderBottom: '2px solid #28a745', paddingBottom: '10px', textAlign: 'center' }}>➕ THÊM KHÁCH HÀNG</h2>
+    <div style={{ padding: '40px 20px', backgroundColor: '#1a1c23', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
+      <ToastContainer theme="dark" position="top-right" />
       
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-          <div><label style={labelStyle}>Mã KH:</label><input name="maKH" value={formData.maKH} readOnly style={{...inputStyle, backgroundColor: '#f0f0f0'}} /></div>
-          <div><label style={labelStyle}>Mã NV:</label><input name="nhanVienId" value={formData.nhanVienId} readOnly style={{...inputStyle, backgroundColor: '#f0f0f0'}} /></div>
-        </div>
+      <div style={{ width: '100%', maxWidth: '700px', backgroundColor: '#1a1c23', border: '1px solid #333', padding: '30px', borderRadius: '8px' }}>
+        <h2 style={{ color: '#f1c40f', borderBottom: '2px solid #333', paddingBottom: '10px', textAlign: 'center', marginBottom: '30px' }}>
+          ➕ TIẾP NHẬN KHÁCH HÀNG
+        </h2>
+        
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <label style={labelStyle}>Mã KH:</label>
+              <input value={formData.maKH} readOnly style={{...inputStyle, opacity: 0.6}} />
+            </div>
+            <div>
+              <label style={labelStyle}>Mã NV (Đăng nhập):</label>
+              <input value={formData.nhanVienId} readOnly style={{...inputStyle, opacity: 0.6}} />
+            </div>
+          </div>
 
-        <div><label style={labelStyle}>Họ Tên (*):</label><input name="hoTen" required value={formData.hoTen} onChange={handleChange} style={inputStyle} /></div>
+          <div>
+            <label style={labelStyle}>Họ Tên (*):</label>
+            <input name="hoTen" required value={formData.hoTen} onChange={handleChange} style={inputStyle} />
+          </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-          <div><label style={labelStyle}>Số CMND/CCCD (*):</label><input name="soCMND" required value={formData.soCMND} onChange={handleChange} style={inputStyle} /></div>
-          <div><label style={labelStyle}>Số ĐT (*):</label><input name="soDienThoai" required value={formData.soDienThoai} onChange={handleChange} style={inputStyle} /></div>
-        </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <label style={labelStyle}>Ngày sinh (*):</label>
+              <input type="date" name="ngaySinh" required value={formData.ngaySinh} onChange={handleChange} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Địa chỉ:</label>
+              <input name="diaChi" value={formData.diaChi} onChange={handleChange} style={inputStyle} placeholder="Nhập địa chỉ..." />
+            </div>
+          </div>
 
-        <div><label style={labelStyle}>Email:</label><input type="email" name="email" value={formData.email} onChange={handleChange} style={inputStyle} /></div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <label style={labelStyle}>Số CMND/CCCD (*):</label>
+              <input name="soCMND" required value={formData.soCMND} onChange={handleChange} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Số ĐT (*):</label>
+              <input name="soDienThoai" required value={formData.soDienThoai} onChange={handleChange} style={inputStyle} />
+            </div>
+          </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-          <div><label style={labelStyle}>Loại KH:</label><select name="loaiKH" value={formData.loaiKH} onChange={handleChange} style={inputStyle}><option value="Mua">Mua / Thuê</option><option value="Bán">Bán / Cho thuê</option></select></div>
-          <div><label style={labelStyle}>Giới Tính:</label><select name="gioiTinh" value={formData.gioiTinh} onChange={handleChange} style={inputStyle}><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select></div>
-        </div>
+          <div>
+            <label style={labelStyle}>Email:</label>
+            <input type="email" name="email" value={formData.email} onChange={handleChange} style={inputStyle} />
+          </div>
 
-        <label style={labelStyle}>Ngày Sinh:</label>
-        <input type="date" name="ngaySinh" value={formData.ngaySinh} onChange={handleChange} style={inputStyle} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+              <label style={labelStyle}>Loại KH:</label>
+              <select name="loaiKH" value={formData.loaiKH} onChange={handleChange} style={inputStyle}>
+                <option value="Mua">Mua / Thuê</option>
+                <option value="Bán">Bán / Cho thuê</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Giới Tính:</label>
+              <select name="gioiTinh" value={formData.gioiTinh} onChange={handleChange} style={inputStyle}>
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+              </select>
+            </div>
+          </div>
 
-        {/* THÊM NÚT HỦY ĐỂ UX TỐT HƠN */}
-        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-          <button type="submit" style={{ flex: 1, padding: '12px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>LƯU THÔNG TIN</button>
-          <button type="button" onClick={() => navigate(backUrl)} style={{ flex: 1, padding: '12px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>HỦY</button>
-        </div>
-      </form>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            <button type="submit" style={{ flex: 2, padding: '15px', backgroundColor: '#f1c40f', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>LƯU THÔNG TIN</button>
+            <button type="button" onClick={() => navigate(backUrl)} style={{ flex: 1, padding: '15px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>HỦY</button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
