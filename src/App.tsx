@@ -23,10 +23,11 @@ import { EmployeeThongBaoPage } from './pages/employee/EmployeeThongBaoPage';
 import { EmployeeHoSoBieuMauPage } from './pages/employee/EmployeeHoSoBieuMauPage';
 import { EmployeeProfilePage } from './pages/employee/EmployeeProfilePage';
 
-// --- IMPORT 3 MÀN HÌNH CHỨC NĂNG CỦA BẠN ---
+// --- IMPORT MÀN HÌNH CHỨC NĂNG KHÁCH HÀNG ---
 import EmployeeKhachHangPage from './pages/employee/EmployeeKhachHangPage';
 import ThemKhachHang from './pages/employee/khachhang/ThemKhachHang';
 import ChiTietKhachHang from './pages/employee/khachhang/ChiTietKhachHang';
+import SuaKhachHang from './pages/employee/khachhang/SuaKhachHang'; // Đã thêm
 
 export function App() {
   return (
@@ -39,11 +40,8 @@ export function App() {
         <Route path="/register" element={<RegisterPage />} />
       </Route>
 
-      {/* 2. Các tuyến đường cho Quản trị viên (Admin) - Tạm gỡ ProtectedRoute */}
-      <Route
-        path="/admin"
-        element={<AdminLayout />}
-      >
+      {/* 2. Các tuyến đường cho Quản trị viên (Admin) */}
+      <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="nhan-vien" element={<AdminNhanVienPage />} />
         <Route path="khach-hang" element={<AdminKhachHangPage />} />
@@ -55,17 +53,15 @@ export function App() {
         <Route path="profile" element={<AdminProfilePage />} />
       </Route>
 
-      {/* 3. Các tuyến đường cho Nhân viên (Employee) - Tạm gỡ ProtectedRoute để bạn làm việc */}
-      <Route
-        path="/employee"
-        element={<EmployeeLayout />}
-      >
+      {/* 3. Các tuyến đường cho Nhân viên (Employee) */}
+      <Route path="/employee" element={<EmployeeLayout />}>
         <Route path="dashboard" element={<EmployeeDashboardPage />} />
         
-        {/* Khu vực xử lý tính năng Quản lý Khách hàng của bạn (Chuẩn SRS v4.0) */}
+        {/* Khu vực quản lý Khách hàng */}
         <Route path="khach-hang" element={<EmployeeKhachHangPage />} />
         <Route path="khach-hang/create" element={<ThemKhachHang />} />
         <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
+        <Route path="khach-hang/edit/:id" element={<SuaKhachHang />} /> {/* Đường dẫn mới */}
         
         <Route path="bat-dong-san" element={<EmployeeBatDongSanPage />} />
         <Route path="nhu-cau" element={<EmployeeNhuCauPage />} />
@@ -75,7 +71,7 @@ export function App() {
         <Route path="profile" element={<EmployeeProfilePage />} />
       </Route>
 
-      {/* 4. Tự động chuyển hướng về trang chủ nếu gõ sai URL */}
+      {/* 4. Tự động chuyển hướng */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

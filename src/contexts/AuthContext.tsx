@@ -9,7 +9,7 @@ type User = {
   email: string;
   soDienThoai?: string | null;
   chucVu: string;
-  role: string | number; // Chấp nhận cả chuỗi hoặc số từ Backend
+  role: string | number;
 };
 
 type AuthContextValue = {
@@ -24,7 +24,11 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  // Khởi tạo state từ localStorage để giữ trạng thái khi F5
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,9 +42,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .profile()
       .then((response) => {
         setUser(response.data);
+        localStorage.setItem('user', JSON.stringify(response.data));
       })
       .catch(() => {
-        // Giữ token để thử lại sau
+        localStorage.removeItem('user');
+        localStorage.removeItem('accessToken');
       })
       .finally(() => setLoading(false));
   }, []);
@@ -48,30 +54,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (maNV: string, matKhau: string) => {
     const response = await authService.login(maNV, matKhau);
     
-    // Lưu token
+    // Lưu token và user vào localStorage
     localStorage.setItem('accessToken', response.data.access_token);
+    localStorage.setItem('user', JSON.stringify(response.data.user));
     
-    // Lưu user
-    const userData = response.data.user;
-    setUser(userData);
+    setUser(response.data.user);
     
-    // Chuẩn hóa role về chuỗi để so sánh
-    const role = String(userData.role).toLowerCase();
-    
-    console.log("Role nhận được là:", role);
-    
-    // Kiểm tra: Nếu là 'admin' hoặc số '1' thì điều hướng sang admin
+    const role = String(response.data.user.role).toLowerCase();
     if (role === 'admin' || role === '1') {
-      console.log("Đang điều hướng tới Admin Dashboard...");
       navigate('/admin/dashboard', { replace: true }); 
     } else {
-      console.log("Đang điều hướng tới Employee Dashboard...");
       navigate('/employee/dashboard', { replace: true });
     }
   };
 
   const logout = () => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('user'); // Xóa cả user
     setUser(null);
     navigate('/');
   };
@@ -79,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshProfile = async () => {
     const response = await authService.profile();
     setUser(response.data);
+    localStorage.setItem('user', JSON.stringify(response.data));
   };
 
   const value = useMemo(() => ({ user, loading, login, logout, refreshProfile }), [user, loading]);
