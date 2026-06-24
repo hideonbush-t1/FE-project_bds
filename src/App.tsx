@@ -12,6 +12,7 @@ import { SchedulePage } from './pages/public/SchedulePage';
 
 // Các trang Admin
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminThongKePage } from './pages/admin/AdminThongKePage';
 import { AdminNhanVienPage } from './pages/admin/AdminNhanVienPage';
 import { AdminKhachHangPage } from './pages/admin/AdminKhachHangPage';
 import { AdminNhuCauPage } from './pages/admin/AdminNhuCauPage';
@@ -55,6 +56,7 @@ export function App() {
       {/* 2. Các tuyến đường cho Quản trị viên (Admin) */}
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<AdminDashboardPage />} />
+        <Route path="thong-ke" element={<AdminThongKePage />} />
         <Route path="nhan-vien" element={<AdminNhanVienPage />} />
         <Route path="khach-hang" element={<AdminKhachHangPage />} />
         <Route path="khach-hang/create" element={<ThemKhachHang />} />
