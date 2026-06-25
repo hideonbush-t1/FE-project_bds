@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 
-// Cập nhật lại Type cho khớp 100% với dữ liệu Backend trả về
+// Định nghĩa kiểu User khớp với phản hồi từ Backend
 type User = {
   id: string;
   maNV: string;
@@ -10,7 +10,8 @@ type User = {
   email: string;
   soDienThoai?: string | null;
   chucVu: string;
-  role: string | number;
+  role: string;      // Bắt buộc có trường này
+  isAdmin: boolean;  // Thêm vào để tránh lỗi thiếu thuộc tính
 };
 
 type AuthContextValue = {
@@ -25,13 +26,20 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  // Khởi tạo state từ localStorage để giữ trạng thái khi F5
+  
+  // Khởi tạo state từ localStorage
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
+  
   const [loading, setLoading] = useState(true);
 
+  // Kiểm tra phiên đăng nhập khi load trang
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (!token) {
@@ -42,41 +50,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authService
       .profile()
       .then((response) => {
-        // Bao phủ mọi trường hợp cấu trúc dữ liệu Backend trả về
-        const userData = response.data?.user || response.data?.data || response.data;
-        setUser(userData as User);
+        const userData = response.data?.user || response.data;
+        setUser(userData);
         localStorage.setItem('user', JSON.stringify(userData));
       })
       .catch(() => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('accessToken');
+        logout();
       })
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (maNV: string, matKhau: string) => {
-    // 1. Gọi API
+    // 1. Gọi API login
     const response = await authService.login(maNV, matKhau);
+    const data = response.data;
+
+    // 2. Lưu token (đúng tên trường accessToken)
+    if (data.accessToken) {
+      localStorage.setItem('accessToken', data.accessToken);
+    }
     
-    // Lưu token và user
-    localStorage.setItem('accessToken', response.data.access_token);
-    
-    // Lưu user an toàn
-    const userData = (response.data.user || response.data) as User;
+    // 3. Lưu thông tin user
+    const userData = data.user as User;
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     
-    // Chuẩn hóa role để điều hướng
-    const role = String(userData?.role || '').toLowerCase();
-    
-    // Dọn dẹp DOM (loại bỏ màn đen modal nếu có)
+    // 4. Dọn dẹp UI (modal backdrop nếu có)
     document.body.classList.remove('modal-open');
     document.body.style.overflow = 'auto';
-    const backdrops = document.querySelectorAll('.modal-backdrop');
-    backdrops.forEach(backdrop => backdrop.remove());
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
     
-    // Điều hướng
-    if (role === 'admin' || role === '1') {
+    // 5. Điều hướng dựa trên role
+    const role = String(userData?.role || '').toLowerCase();
+    if (role === 'admin') {
       navigate('/admin/dashboard', { replace: true }); 
     } else {
       navigate('/employee/dashboard', { replace: true });
@@ -91,13 +97,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshProfile = async () => {
-    const response = await authService.profile();
-    const userData = response.data?.user || response.data?.data || response.data;
-    setUser(userData as User);
-    localStorage.setItem('user', JSON.stringify(userData));
+    try {
+      const response = await authService.profile();
+      const userData = response.data?.user || response.data;
+      setUser(userData as User);
+      localStorage.setItem('user', JSON.stringify(userData));
+    } catch (error) {
+      logout();
+    }
   };
 
-  const value = useMemo(() => ({ user, loading, login, logout, refreshProfile }), [user, loading]);
+  const value = useMemo(() => ({ 
+    user, 
+    loading, 
+    login, 
+    logout, 
+    refreshProfile 
+  }), [user, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -49,10 +49,9 @@ export default function SuaKhachHang() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     try {
-      // Đã đổi từ http.put sang http.patch để khớp với @Patch() ở Backend
-      await http.patch(`/khach-hang/${id}`, {
-        ...formData
-      });
+      // Loại bỏ mã khách hàng ra khỏi body khi gửi patch để tránh lỗi Prisma
+      const { maKH, ...updateData } = formData;
+      await http.patch(`/khach-hang/${id}`, updateData);
       toast.success('Cập nhật thành công!');
       setTimeout(() => navigate('/employee/khach-hang'), 1000);
     } catch (error: any) {
@@ -68,6 +67,7 @@ export default function SuaKhachHang() {
       <div style={{ width: '100%', maxWidth: '600px', backgroundColor: '#252830', padding: '30px', borderRadius: '8px', color: '#fff' }}>
         <h2 style={{ color: '#f1c40f', textAlign: 'center' }}>✏️ CHỈNH SỬA KHÁCH HÀNG</h2>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          {/* ... (Giữ nguyên các phần input trước đó của bạn) ... */}
           <div>
             <label>Mã KH:</label>
             <input value={formData.maKH} readOnly style={{...inputStyle, opacity: 0.6}} />
@@ -108,9 +108,20 @@ export default function SuaKhachHang() {
             <label>Email:</label>
             <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} style={inputStyle} />
           </div>
-          <button type="submit" style={{ padding: '12px', background: '#f1c40f', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', marginTop: '10px' }}>
-            LƯU THAY ĐỔI
-          </button>
+
+          {/* NÚT ĐIỀU HƯỚNG */}
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            <button type="submit" style={{ flex: 2, padding: '12px', background: '#f1c40f', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+              LƯU THAY ĐỔI
+            </button>
+            <button 
+              type="button" 
+              onClick={() => navigate('/employee/khach-hang')} 
+              style={{ flex: 1, padding: '12px', background: '#555', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', color: '#fff' }}
+            >
+              QUAY LẠI
+            </button>
+          </div>
         </form>
       </div>
     </div>

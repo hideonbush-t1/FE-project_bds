@@ -26,22 +26,29 @@ import { AdminProfilePage } from '../pages/admin/AdminProfilePage';
 // ================== EMPLOYEE PAGES ==================
 import { EmployeeDashboardPage } from '../pages/employee/EmployeeDashboardPage';
 import { EmployeeBatDongSanPage } from '../pages/employee/EmployeeBatDongSanPage';
-import { EmployeeNhuCauPage } from '../pages/employee/EmployeeNhuCauPage';
 import { EmployeeGiaoDichPage } from '../pages/employee/EmployeeGiaoDichPage';
 import { EmployeeThongBaoPage } from '../pages/employee/EmployeeThongBaoPage';
 import { EmployeeHoSoBieuMauPage } from '../pages/employee/EmployeeHoSoBieuMauPage';
 import { EmployeeProfilePage } from '../pages/employee/EmployeeProfilePage';
 
-// --- TÍNH NĂNG KHÁCH HÀNG (CỦA RIÊNG BẠN) ---
+// --- CỤM TÍNH NĂNG KHÁCH HÀNG ---
 import EmployeeKhachHangPage from '../pages/employee/EmployeeKhachHangPage';
 import ThemKhachHang from '../pages/employee/khachhang/ThemKhachHang';
 import ChiTietKhachHang from '../pages/employee/khachhang/ChiTietKhachHang';
+import SuaKhachHang from '../pages/employee/khachhang/SuaKhachHang'; // Đã thêm mới
+import DanhSachBDS from '../pages/employee/khachhang/batdongsan/DanhSachBDS';
+
+// --- CỤM TÍNH NĂNG NHU CẦU ---
+import EmployeeNhuCauPage from '../pages/employee/EmployeeNhuCauPage'
+import ThemNhuCau from '../pages/employee/nhucau/ThemNhuCau';
+import ChiTietNhuCau from '../pages/employee/nhucau/ChiTietNhuCau';
+import SuaNhuCau from '../pages/employee/nhucau/SuaNhuCau'; // Đã đổi thành SuaNhuCau
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* 1. PUBLIC ROUTES (Trang chủ và các trang vệ tinh) */}
+        {/* 1. PUBLIC ROUTES */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/thong-bao" element={<NotificationsPage />} />
@@ -67,22 +74,27 @@ export default function AppRoutes() {
         <Route path="/employee" element={<EmployeeLayout />}>
           <Route path="dashboard" element={<EmployeeDashboardPage />} />
           
-          {/* Cụm tuyến đường dành riêng cho chức năng Khách Hàng của bạn */}
+          {/* Cụm Khách Hàng */}
           <Route path="khach-hang" element={<EmployeeKhachHangPage />} />
           <Route path="khach-hang/create" element={<ThemKhachHang />} />
           <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
+          <Route path="khach-hang/edit/:id" element={<SuaKhachHang />} />
+          <Route path="khach-hang/batdongsan" element={<DanhSachBDS />} /> {/* <--- THÊM DÒNG NÀY */}
 
-          {/* Tuyến đường của các thành viên khác (đã chuẩn bị sẵn khung) */}
-          <Route path="bat-dong-san" element={<EmployeeBatDongSanPage />} />
+          {/* Cụm Nhu Cầu */}
           <Route path="nhu-cau" element={<EmployeeNhuCauPage />} />
+          <Route path="nhu-cau/create" element={<ThemNhuCau />} />
+          <Route path="nhu-cau/:id" element={<ChiTietNhuCau />} />
+          <Route path="nhu-cau/edit/:id" element={<SuaNhuCau />} />
+
+          <Route path="bat-dong-san" element={<EmployeeBatDongSanPage />} />
           <Route path="giao-dich" element={<EmployeeGiaoDichPage />} />
           <Route path="thong-bao" element={<EmployeeThongBaoPage />} />
           <Route path="ho-so-bieu-mau" element={<EmployeeHoSoBieuMauPage />} />
           <Route path="profile" element={<EmployeeProfilePage />} />
         </Route>
 
-        {/* 4. CHỐNG LỖI MẤT PHƯƠNG HƯỚNG */}
-        {/* Nếu người dùng gõ link bậy bạ, tự động đá về Trang chủ */}
+        {/* 4. FALLBACK */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

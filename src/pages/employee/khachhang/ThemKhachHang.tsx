@@ -12,7 +12,7 @@ export default function ThemKhachHang() {
 
   const [formData, setFormData] = useState({
     maKH: 'Đang tải...',
-    loaiKH: 'Mua',
+    loaiKH: 'Cá nhân', // ĐÃ SỬA: Giá trị mặc định là 'Cá nhân'
     hoTen: '',
     gioiTinh: 'Nam',
     ngaySinh: '',
@@ -23,7 +23,6 @@ export default function ThemKhachHang() {
     soCMND: ''
   });
 
-  // Nhận diện Admin hay Nhân viên để quay lại cho chuẩn
   const isRouteAdmin = location.pathname.includes('/admin');
   const backUrl = isRouteAdmin ? '/admin/khach-hang' : '/employee/khach-hang';
 
@@ -105,7 +104,6 @@ export default function ThemKhachHang() {
         </h2>
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* ... các trường input (giữ nguyên cấu trúc của bạn) */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div><label style={labelStyle}>Mã KH:</label><input value={formData.maKH} readOnly style={{...inputStyle, opacity: 0.6}} /></div>
             <div><label style={labelStyle}>Mã NV:</label><input value={formData.nhanVienId} readOnly style={{...inputStyle, opacity: 0.6}} /></div>
@@ -125,7 +123,14 @@ export default function ThemKhachHang() {
           <div><label style={labelStyle}>Email:</label><input type="email" name="email" value={formData.email} onChange={handleChange} style={inputStyle} /></div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            <div><label style={labelStyle}>Loại KH:</label><select name="loaiKH" value={formData.loaiKH} onChange={handleChange} style={inputStyle}><option value="Mua">Mua / Thuê</option><option value="Bán">Bán / Cho thuê</option></select></div>
+            {/* ĐÃ SỬA: Thay đổi các option của Loại KH */}
+            <div>
+                <label style={labelStyle}>Loại KH:</label>
+                <select name="loaiKH" value={formData.loaiKH} onChange={handleChange} style={inputStyle}>
+                    <option value="Cá nhân">Cá nhân</option>
+                    <option value="Doanh nghiệp">Doanh nghiệp</option>
+                </select>
+            </div>
             <div><label style={labelStyle}>Giới Tính:</label><select name="gioiTinh" value={formData.gioiTinh} onChange={handleChange} style={inputStyle}><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select></div>
           </div>
 

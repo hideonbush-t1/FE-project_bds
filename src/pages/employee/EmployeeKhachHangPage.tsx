@@ -14,24 +14,21 @@ export default function EmployeeKhachHangPage() {
   
   const itemsPerPage = 5;
 
-  // Gọi API lấy danh sách khách hàng
   const fetchKhachHang = async () => {
     try {
       const res = await http.get(`/khach-hang?search=${searchKey}&loaiKH=${loaiKH}`);
       setKhachHangList(res.data);
-      setCurrentPage(1); // Luôn reset về trang 1 khi thay đổi bộ lọc
+      setCurrentPage(1);
     } catch (error) { 
       toast.error("Không thể tải danh sách khách hàng!");
     }
   };
 
-  // Sử dụng debounce cho tìm kiếm
   useEffect(() => {
     const delay = setTimeout(fetchKhachHang, 300);
     return () => clearTimeout(delay);
   }, [searchKey, loaiKH]);
 
-  // HÀM XỬ LÝ XÓA
   const confirmDelete = async () => {
     if (!deleteModal.id) return;
     
@@ -47,7 +44,6 @@ export default function EmployeeKhachHangPage() {
     }
   };
 
-  // Tính toán phân trang
   const totalPages = Math.max(1, Math.ceil(khachHangList.length / itemsPerPage));
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -60,18 +56,20 @@ export default function EmployeeKhachHangPage() {
       <div style={{ width: '100%', maxWidth: '1200px', color: '#fff' }}>
         <h2 style={{ borderBottom: '2px solid #333', paddingBottom: '10px' }}>📋 QUẢN LÝ KHÁCH HÀNG</h2>
         
-        {/* Bộ lọc và Nút thêm mới */}
         <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
           <input 
             placeholder="Tìm theo Mã, Tên, SĐT..." 
             onChange={(e) => setSearchKey(e.target.value)} 
             style={{ padding: '10px', width: '250px', background: '#252830', border: '1px solid #444', color: '#fff', borderRadius: '4px' }} 
           />
+          
+          {/* ĐÃ SỬA: Thay đổi options thành Cá nhân / Doanh nghiệp */}
           <select onChange={(e) => setLoaiKH(e.target.value)} style={{ padding: '10px', background: '#252830', border: '1px solid #444', color: '#fff', borderRadius: '4px' }}>
             <option value="">-- Tất cả loại --</option>
-            <option value="Mua">Nhu cầu Mua</option>
-            <option value="Bán">Nhu cầu Bán</option>
+            <option value="Cá nhân">Cá nhân</option>
+            <option value="Doanh nghiệp">Doanh nghiệp</option>
           </select>
+
           <button 
             onClick={() => {
                const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -84,42 +82,42 @@ export default function EmployeeKhachHangPage() {
         </div>
 
         {/* Bảng danh sách */}
-<table style={{ width: '100%', borderCollapse: 'collapse', background: '#252830', borderRadius: '8px', overflow: 'hidden' }}>
-  <thead>
-    <tr style={{ background: '#333', textAlign: 'left' }}>
-      <th style={{ padding: '15px' }}>Mã KH</th>
-      <th style={{ padding: '15px' }}>Tên khách hàng</th>
-      <th style={{ padding: '15px' }}>Loại</th>
-      <th style={{ padding: '15px' }}>Địa chỉ</th>
-      <th style={{ padding: '15px' }}>SĐT</th>
-      <th style={{ padding: '15px' }}>CMND</th>
-      <th style={{ padding: '15px' }}>NV Quản Lý</th>
-      <th style={{ padding: '15px' }}>Thao tác</th>
-    </tr>
-  </thead>
-  <tbody>
-    {currentItems.length > 0 ? currentItems.map((kh: any) => (
-      <tr key={kh.id} style={{ borderBottom: '1px solid #3d4149' }}>
-        <td style={{ padding: '15px' }}>{kh.id}</td>
-        <td style={{ padding: '15px' }}>{kh.hoTen}</td>
-        <td style={{ padding: '15px' }}>{kh.loaiKH}</td>
-        <td style={{ padding: '15px', color: '#aaa', fontSize: '0.9em' }}>{kh.diaChi || '—'}</td>
-        <td style={{ padding: '15px' }}>{kh.soDienThoai}</td>
-        <td style={{ padding: '15px' }}>{kh.soCMND || '—'}</td>
-        <td style={{ padding: '15px' }}>{kh.nhanVienId || '—'}</td>
-        <td style={{ padding: '15px' }}>
-          <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-            <button onClick={() => navigate(`/employee/khach-hang/${kh.id}`)} style={{ background: '#3498db', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Xem</button>
-            <button onClick={() => navigate(`/employee/khach-hang/edit/${kh.id}`)} style={{ background: '#f1c40f', color: '#000', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Sửa</button>
-            <button onClick={() => setDeleteModal({ isOpen: true, id: kh.id })} style={{ background: '#e74c3c', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Xóa</button>
-          </div>
-        </td>
-      </tr>
-    )) : (
-      <tr><td colSpan={8} style={{ padding: '20px', textAlign: 'center' }}>Không tìm thấy dữ liệu</td></tr>
-    )}
-  </tbody>
-</table>
+        <table style={{ width: '100%', borderCollapse: 'collapse', background: '#252830', borderRadius: '8px', overflow: 'hidden' }}>
+          <thead>
+            <tr style={{ background: '#333', textAlign: 'left' }}>
+              <th style={{ padding: '15px' }}>Mã KH</th>
+              <th style={{ padding: '15px' }}>Tên khách hàng</th>
+              <th style={{ padding: '15px' }}>Loại</th>
+              <th style={{ padding: '15px' }}>Địa chỉ</th>
+              <th style={{ padding: '15px' }}>SĐT</th>
+              <th style={{ padding: '15px' }}>CMND</th>
+              <th style={{ padding: '15px' }}>NV Quản Lý</th>
+              <th style={{ padding: '15px' }}>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentItems.length > 0 ? currentItems.map((kh: any) => (
+              <tr key={kh.id} style={{ borderBottom: '1px solid #3d4149' }}>
+                <td style={{ padding: '15px' }}>{kh.id}</td>
+                <td style={{ padding: '15px' }}>{kh.hoTen}</td>
+                <td style={{ padding: '15px' }}>{kh.loaiKH}</td>
+                <td style={{ padding: '15px', color: '#aaa', fontSize: '0.9em' }}>{kh.diaChi || '—'}</td>
+                <td style={{ padding: '15px' }}>{kh.soDienThoai}</td>
+                <td style={{ padding: '15px' }}>{kh.soCMND || '—'}</td>
+                <td style={{ padding: '15px' }}>{kh.nhanVienId || '—'}</td>
+                <td style={{ padding: '15px' }}>
+                  <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                    <button onClick={() => navigate(`/employee/khach-hang/${kh.id}`)} style={{ background: '#3498db', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Xem</button>
+                    <button onClick={() => navigate(`/employee/khach-hang/edit/${kh.id}`)} style={{ background: '#f1c40f', color: '#000', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Sửa</button>
+                    <button onClick={() => setDeleteModal({ isOpen: true, id: kh.id })} style={{ background: '#e74c3c', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Xóa</button>
+                  </div>
+                </td>
+              </tr>
+            )) : (
+              <tr><td colSpan={8} style={{ padding: '20px', textAlign: 'center' }}>Không tìm thấy dữ liệu</td></tr>
+            )}
+          </tbody>
+        </table>
 
         {/* Phân trang */}
         <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '5px' }}>
@@ -128,8 +126,8 @@ export default function EmployeeKhachHangPage() {
           <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => prev + 1)} style={{ padding: '8px 15px', background: '#333', color: '#fff', border: 'none', cursor: 'pointer' }}>Sau</button>
         </div>
       </div>
-
-      {/* Modal xác nhận xóa */}
+      
+      {/* Modal xóa */}
       {deleteModal.isOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
           <div style={{ background: '#252830', padding: '30px', borderRadius: '8px', border: '1px solid #444', color: '#fff' }}>
