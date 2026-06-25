@@ -18,6 +18,9 @@ import { AdminGiaoDichPage } from './pages/admin/AdminGiaoDichPage';
 import { AdminThongBaoPage } from './pages/admin/AdminThongBaoPage';
 import { AdminHoSoBieuMauPage } from './pages/admin/AdminHoSoBieuMauPage';
 import { AdminProfilePage } from './pages/admin/AdminProfilePage';
+import { AddNhanVien } from './pages/admin/AddNhanVien';
+import { EditNhanVien } from './pages/admin/EditNhanVien';
+import { DetailNhanVien } from './pages/admin/DetailNhanVien';
 
 import { EmployeeDashboardPage } from './pages/employee/EmployeeDashboardPage';
 import { EmployeeNhuCauPage } from './pages/employee/EmployeeNhuCauPage';
@@ -61,6 +64,10 @@ export function App() {
       >
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="nhan-vien" element={<AdminNhanVienPage />} />
+
+        <Route path="nhan-vien/add" element={<AddNhanVien />} />
+        <Route path="nhan-vien/edit/:id" element={<EditNhanVien />} />
+        <Route path="nhan-vien/detail/:id" element={<DetailNhanVien />} />
         
         {/* ĐÃ SỬA: Đủ 3 route cho Khách Hàng (Danh sách, Thêm, Chi tiết) */}
         <Route path="khach-hang" element={<AdminKhachHangPage />} />
