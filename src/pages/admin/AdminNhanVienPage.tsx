@@ -4,8 +4,19 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../batdongsan/BatDongSan.css'; // Dùng chung CSS của Bất động sản
 
+interface NhanVien {
+  id: string;
+  maNV: string;
+  hoTen: string;
+  email: string;
+  soDienThoai: string;
+  chucVu: string;
+  role?: string;
+  Role?: string;
+}
+
 export function AdminNhanVienPage() {
-  const [danhSachNV, setDanhSachNV] = useState<any[]>([]);
+  const [danhSachNV, setDanhSachNV] = useState<NhanVien[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8; 
 
@@ -18,13 +29,21 @@ export function AdminNhanVienPage() {
     })
       .then((response) => response.json())
       .then((data) => {
+        let list = [];
         if (Array.isArray(data)) {
-          setDanhSachNV(data);
+          list = data;
         } else if (data.data && Array.isArray(data.data)) {
-          setDanhSachNV(data.data); // Đề phòng API trả về { data: [...] }
-        } else {
-          setDanhSachNV([]);
+          list = data.data; 
         }
+
+        // 💡 BÍ QUYẾT LÀ ĐOẠN NÀY: Sắp xếp mảng theo thứ tự Mã NV (id) tăng dần
+        list.sort((a: NhanVien, b: NhanVien) => {
+          const idA = a.id || a.maNV || '';
+          const idB = b.id || b.maNV || '';
+          return idA.localeCompare(idB);
+        });
+
+        setDanhSachNV(list);
       })
       .catch(() => {
         toast.error('Không thể kết nối đến máy chủ Backend!');
