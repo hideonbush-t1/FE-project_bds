@@ -1,8 +1,7 @@
 import { http } from '../api/http';
 
 export type LoginResponse = {
-  // Sửa lại thành accessToken (không có dấu gạch dưới)
-  accessToken: string; 
+  access_token: string; // Khớp với Backend
   user: {
     id: string;
     maNV: string;
@@ -10,17 +9,15 @@ export type LoginResponse = {
     email: string;
     soDienThoai?: string | null;
     chucVu: string;
-    isAdmin: boolean; // Dùng boolean để check quyền dễ hơn
+    role: string;
   };
 };
 
 export const authService = {
   login(maNV: string, matKhau: string) {
-    // Axios sẽ trả về một object, dữ liệu nằm trong .data
     return http.post<LoginResponse>('/auth/login', { maNV, matKhau });
   },
   profile() {
-    // Bạn nên định nghĩa kiểu cho profile() để TypeScript không báo lỗi
     return http.get('/auth/profile');
   },
   changePassword(currentPassword: string, newPassword: string) {
