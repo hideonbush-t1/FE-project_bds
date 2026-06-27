@@ -46,7 +46,9 @@ export function EmployeeHoSoBieuMauPage() {
   const [viewingForm, setViewingForm] = useState<BieuMau | null>(null);
   const [forms, setForms] = useState<BieuMau[]>([]);
 
-  useEffect(() => { fetchForms(); }, []);
+  useEffect(() => { 
+    fetchForms(); 
+  }, []);
 
   const fetchForms = async () => {
     try {
@@ -56,6 +58,13 @@ export function EmployeeHoSoBieuMauPage() {
       console.error("Lỗi tải danh sách:", error);
       toast.error('Không thể tải danh sách dữ liệu!');
     }
+  };
+
+  const handleDownload = (id: number) => {
+    // Gọi đến API download đã định nghĩa trong Controller: @Get(':id/download')
+    // Nếu có token, axios interceptor của bạn sẽ tự gắn vào request này
+    const downloadUrl = `http://localhost:4000/ho-so-bieu-mau/${id}/download`;
+    window.open(downloadUrl, '_blank');
   };
 
   const styles = {

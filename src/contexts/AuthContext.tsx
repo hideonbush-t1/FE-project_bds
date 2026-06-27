@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { toast } from 'react-toastify'; // 💡 BƯỚC 1: Thêm import thư viện pop-up
 
-// Cập nhật lại Type cho khớp 100% với dữ liệu Backend trả về
 type User = {
   id: string;
   maNV: string;
@@ -10,7 +10,8 @@ type User = {
   email: string;
   soDienThoai?: string | null;
   chucVu: string;
-  role: string | number;
+  role: string;      // Bắt buộc có trường này
+  isAdmin: boolean;  // Thêm vào để tránh lỗi thiếu thuộc tính
 };
 
 type AuthContextValue = {
@@ -25,13 +26,20 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  // Khởi tạo state từ localStorage để giữ trạng thái khi F5
+  
+  // Khởi tạo state từ localStorage
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
+  
   const [loading, setLoading] = useState(true);
 
+  // Kiểm tra phiên đăng nhập khi load trang
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (!token) {
@@ -42,40 +50,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authService
       .profile()
       .then((response) => {
-        // Bao phủ mọi trường hợp cấu trúc dữ liệu Backend trả về
         const userData = response.data?.user || response.data?.data || response.data;
         setUser(userData as User);
-        localStorage.setItem('user', JSON.stringify(userData));
       })
-      .catch(() => {
-        localStorage.removeItem('user');
-        localStorage.removeItem('accessToken');
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (maNV: string, matKhau: string) => {
-    // 1. Gọi API
     const response = await authService.login(maNV, matKhau);
-    
-    // Lưu token và user
     localStorage.setItem('accessToken', response.data.access_token);
     
-    // Lưu user an toàn
-    const userData = (response.data.user || response.data) as User;
+    const userData = response.data.user as User;
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     
-    // Chuẩn hóa role để điều hướng
-    const role = String(userData?.role || '').toLowerCase();
-    
-    // Dọn dẹp DOM (loại bỏ màn đen modal nếu có)
+    const role = String(userData?.Role || userData?.role).toLowerCase();
+
+    // Diệt màn đen... (giữ nguyên code của bạn)
     document.body.classList.remove('modal-open');
     document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
+    document.body.style.paddingRight = '0px';
+    document.documentElement.style.paddingRight = '0px';
     const backdrops = document.querySelectorAll('.modal-backdrop');
     backdrops.forEach(backdrop => backdrop.remove());
-    
-    // Điều hướng
+
+    // 💡 BƯỚC 2: Bắn pop-up thành công
+    toast.success('Đăng nhập thành công!');
+
     if (role === 'admin' || role === '1') {
       navigate('/admin/dashboard', { replace: true }); 
     } else {
@@ -87,17 +90,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
     setUser(null);
-    window.location.href = '/';
+
+    // 💡 BƯỚC 3: Bắn pop-up đăng xuất
+    toast.success('Đăng xuất thành công!');
+
+    // Delay 0.8 giây để pop-up kịp hiện ra cho người dùng nhìn thấy trước khi F5 trang
+    setTimeout(() => {
+      window.location.href = '/login'; // Sửa '/' thành '/login' để đá về thẳng trang đăng nhập
+    }, 800);
   };
 
   const refreshProfile = async () => {
     const response = await authService.profile();
     const userData = response.data?.user || response.data?.data || response.data;
     setUser(userData as User);
-    localStorage.setItem('user', JSON.stringify(userData));
   };
 
-  const value = useMemo(() => ({ user, loading, login, logout, refreshProfile }), [user, loading]);
+  const value = useMemo(() => ({ 
+    user, 
+    loading, 
+    login, 
+    logout, 
+    refreshProfile 
+  }), [user, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
