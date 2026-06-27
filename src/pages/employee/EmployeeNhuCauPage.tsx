@@ -1,137 +1,326 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Table, Button, Input, Modal, Form, Select, message, Row, Col, Space, Typography, Descriptions, ConfigProvider, theme } from 'antd';
+import { PlusOutlined, SearchOutlined, EyeOutlined, ThunderboltOutlined, SwapRightOutlined } from '@ant-design/icons';
 import { http } from '../../api/http';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useNavigate } from 'react-router-dom';
 
-export default function EmployeeNhuCauPage() {
+const { Option } = Select;
+const { Text, Title } = Typography;
+
+export function EmployeeNhuCauPage() {
   const navigate = useNavigate();
-  const [nhuCauList, setNhuCauList] = useState([]);
-  const [searchKey, setSearchKey] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
-  
-  const itemsPerPage = 5;
+  const [messageApi, contextHolder] = message.useMessage();
+
+  const [nhuCauList, setNhuCauList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState('');
+
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [form] = Form.useForm();
+
+  const [isDetailVisible, setIsDetailVisible] = useState(false);
+  const [detailData, setDetailData] = useState<any>(null);
+
+  const [isSuggestModalVisible, setIsSuggestModalVisible] = useState(false);
+  const [suggestList, setSuggestList] = useState<any[]>([]);
+  const [loadingSuggest, setLoadingSuggest] = useState(false);
+  const [currentNhuCau, setCurrentNhuCau] = useState<any>(null);
+
+  const GOLD_COLOR = '#D4AF37'; 
+
+  const getUserAuth = () => {
+    try {
+      const userRaw = localStorage.getItem('user') || localStorage.getItem('userInfo') || localStorage.getItem('profile');
+      if (userRaw) {
+        const userObj = JSON.parse(userRaw);
+        return {
+          id: userObj?.maNV || userObj?.id || 'NV001',
+          name: userObj?.hoTen || 'Nhân viên 1'
+        };
+      }
+    } catch (e) {
+      console.error('Lỗi giải mã dữ liệu user auth:', e);
+    }
+    return { id: 'NV001', name: 'Nhân viên 1' };
+  };
+
+  const currentNhanVien = getUserAuth();
 
   const fetchNhuCau = async () => {
+    setLoading(true);
     try {
-      const res = await http.get('/nhu-cau/search', { params: { q: searchKey.trim() } });
+      const res = await http.get('/nhu-cau'); 
       setNhuCauList(res.data);
-      setCurrentPage(1);
     } catch (error) {
-      toast.error("Không thể tải danh sách nhu cầu!");
+      messageApi.error('Không thể tải danh sách nhu cầu!');
     }
+    setLoading(false);
   };
 
   useEffect(() => {
-    const delay = setTimeout(fetchNhuCau, 300);
-    return () => clearTimeout(delay);
-  }, [searchKey]);
+    fetchNhuCau();
+  }, []);
 
-  const confirmDelete = async () => {
-    if (!deleteModal.id) return;
+  const handleOpenAdd = () => {
+    form.resetFields();
+    form.setFieldsValue({
+      nhanVienHienThi: `${currentNhanVien.name} (${currentNhanVien.id})`,
+      nhanVienId: currentNhanVien.id
+    });
+    setIsFormVisible(true);
+  };
+
+  const handleOpenDetail = (record: any) => {
+    setDetailData(record);
+    setIsDetailVisible(true);
+  };
+
+  const handleOpenSuggest = async (record: any) => {
+    setCurrentNhuCau(record);
+    setLoadingSuggest(true);
+    setIsSuggestModalVisible(true);
     try {
-      await http.delete(`/nhu-cau/${deleteModal.id}`);
-      toast.success("Xóa thành công!");
+      const res = await http.get(`/giao-dich/suggest/${record.id}`);
+      setSuggestList(res.data.danhSachGoiY || []);
+    } catch (error) {
+      messageApi.error('Lỗi khi tải danh sách gợi ý!');
+      setSuggestList([]);
+    }
+    setLoadingSuggest(false);
+  };
+
+  const handleFinishForm = async (values: any) => {
+    try {
+      const payload: any = {
+        khachHangId: values.khachHangId,
+        nhanVienId: currentNhanVien.id,
+        loaiNhuCau: values.loaiNC, 
+        loaiBDS: values.loaiBDS,
+        viTri: values.viTri,
+        dienTichMin: values.dienTichMin ? Number(values.dienTichMin) : null,
+        dienTichMax: values.dienTichMax ? Number(values.dienTichMax) : null,
+        ghiChu: values.ghiChu
+      };
+
+      await http.post('/nhu-cau', payload);
+      messageApi.success('Đã lưu nhu cầu khách hàng thành công!');
+      setIsFormVisible(false);
       fetchNhuCau();
     } catch (error) {
-      toast.error("Không thể xóa nhu cầu!");
-    } finally {
-      setDeleteModal({ isOpen: false, id: null });
+      messageApi.error('Lỗi khi tạo nhu cầu mới!');
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil(nhuCauList.length / itemsPerPage));
-  const currentItems = nhuCauList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const columns = [
+    { title: 'MÃ NC', dataIndex: 'id', key: 'id', render: (t: any) => <Text strong className="text-white">{t}</Text> },
+    { title: 'KHÁCH HÀNG', dataIndex: 'khachHangId', key: 'khachHangId', render: (t: any) => <span className="text-white font-semibold">{t}</span> },
+    { 
+      title: 'HÌNH THỨC', 
+      dataIndex: 'loaiNC', 
+      key: 'loaiNC', 
+      render: (v: string) => <Text style={{ color: v === 'Mua' ? GOLD_COLOR : '#fff' }} strong>{v}</Text> 
+    },
+    { title: 'LOẠI BĐS', dataIndex: 'loaiBDS', key: 'loaiBDS', render: (t: any) => <span className="text-gray-300">{t}</span> },
+    { title: 'KHU VỰC', dataIndex: 'viTri', key: 'viTri', render: (t: any) => <span className="text-gray-300">{t}</span> },
+    { 
+      title: 'DIỆN TÍCH', 
+      key: 'dienTich', 
+      render: (_: any, record: any) => <span className="text-gray-300">{record.dienTichMin || 0} - {record.dienTichMax || '∞'} m²</span> 
+    },
+    {
+      title: 'HÀNH ĐỘNG',
+      key: 'action',
+      width: 200,
+      render: (_: any, record: any) => (
+        <Space size="small">
+          <Button type="text" icon={<EyeOutlined />} style={{ color: GOLD_COLOR }} onClick={() => handleOpenDetail(record)}>
+            Xem
+          </Button>
+          <Button type="primary" size="small" icon={<ThunderboltOutlined />} style={{ backgroundColor: '#52c41a', color: '#000', fontWeight: 'bold' }} onClick={() => handleOpenSuggest(record)}>
+            Gợi ý BĐS
+          </Button>
+        </Space>
+      ),
+    },
+  ];
+
+  const suggestColumns = [
+    { title: 'MÃ BĐS', dataIndex: 'id', key: 'id', render: (t: any) => <Text strong style={{ color: GOLD_COLOR }}>{t}</Text> },
+    { title: 'ĐỊA CHỈ', dataIndex: 'diaChi', key: 'diaChi' },
+    { title: 'DIỆN TÍCH', dataIndex: 'dienTich', key: 'dienTich', render: (v: any) => `${v} m²` },
+    { title: 'GIÁ TIỀN', dataIndex: 'giaTien', key: 'giaTien', render: (v: any) => <Text type="success" strong>{Number(v).toLocaleString('vi-VN')} đ</Text> },
+    {
+      title: 'HÀNH ĐỘNG',
+      key: 'action',
+      render: (_: any, bdsRecord: any) => (
+        <Button 
+          type="primary" 
+          size="small"
+          icon={<SwapRightOutlined />}
+          style={{ backgroundColor: GOLD_COLOR, color: '#000', fontWeight: 'bold' }}
+          onClick={() => {
+            setIsSuggestModalVisible(false);
+            navigate('/employee/giao-dich', { 
+              state: { 
+                khachHangId: currentNhuCau?.khachHangId, 
+                batDongSanId: bdsRecord.id,
+                nhuCauId: currentNhuCau?.id 
+              } 
+            });
+          }}
+        >
+          Tạo Giao dịch
+        </Button>
+      )
+    }
+  ];
 
   return (
-    <div style={{ padding: '40px 20px', backgroundColor: '#1a1c23', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
-      <ToastContainer theme="dark" position="top-right" />
-      
-      {/* Modal xác nhận xóa */}
-      {deleteModal.isOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: '#252830', padding: '20px', borderRadius: '8px', color: '#fff', textAlign: 'center' }}>
-            <p>Bạn có chắc chắn muốn xóa nhu cầu này?</p>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
-              <button onClick={() => setDeleteModal({ isOpen: false, id: null })} style={{ padding: '8px 16px', cursor: 'pointer' }}>Hủy</button>
-              <button onClick={confirmDelete} style={{ padding: '8px 16px', backgroundColor: '#e74c3c', color: '#fff', border: 'none', cursor: 'pointer' }}>Xóa</button>
+    <ConfigProvider
+      theme={{
+        algorithm: theme.darkAlgorithm, 
+        token: { colorPrimary: GOLD_COLOR, colorBgBase: '#141414', colorBgContainer: '#1f1f1f', colorTextBase: '#ffffff' },
+        components: {
+          Table: { headerColor: GOLD_COLOR, headerBg: '#141414', borderColor: '#333333' },
+          Modal: { headerBg: '#1f1f1f', contentBg: '#1f1f1f' },
+          Descriptions: { colorText: '#ffffff', colorTextSecondary: '#aaaaaa' }
+        }
+      }}
+    >
+      {contextHolder}
+      <div className="p-6 bg-[#141414] min-h-[85vh] text-white">
+        <div className="flex justify-between items-center mb-6 border-b border-[#333] pb-4">
+          <Title level={3} style={{ margin: 0, color: GOLD_COLOR, textTransform: 'uppercase' }}>
+            Nhu cầu khách hàng (Dành cho Sale)
+          </Title>
+          <Space size="middle">
+            <Input 
+              placeholder="Tìm kiếm..." 
+              prefix={<SearchOutlined style={{ color: GOLD_COLOR }} />} 
+              style={{ width: '250px', backgroundColor: '#1f1f1f', borderColor: '#333', color: 'white' }}
+              onChange={(e) => setSearchText(e.target.value)} 
+            />
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAdd} style={{ fontWeight: 600, color: '#000' }}>
+              Thêm mới
+            </Button>
+          </Space>
+        </div>
+
+        <Table 
+          columns={columns} 
+          dataSource={nhuCauList.filter((i: any) => {
+            if (!searchText) return true;
+            const text = searchText.toLowerCase();
+            return i?.id?.toLowerCase().includes(text) || i?.khachHangId?.toLowerCase().includes(text);
+          })} 
+          rowKey="id" 
+          loading={loading} 
+          bordered
+          pagination={{ pageSize: 10 }}
+        />
+
+        <Modal 
+          title={<div style={{ color: GOLD_COLOR, textTransform: 'uppercase', fontSize: '18px' }}>Tạo Nhu cầu Mới</div>} 
+          open={isFormVisible} onCancel={() => setIsFormVisible(false)} footer={null} width={700} closeIcon={<span style={{ color: '#fff' }}>✖</span>}
+        >
+          <Form form={form} layout="vertical" onFinish={handleFinishForm}>
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item name="nhanVienHienThi" label={<span className="text-gray-300">Nhân viên phụ trách</span>}>
+                  <Input disabled style={{ backgroundColor: '#1f1f1f', color: GOLD_COLOR, fontWeight: 'bold' }} />
+                </Form.Item>
+              </Col>
+              <Col span={24}>
+                <Form.Item name="khachHangId" label={<span className="text-gray-300">Mã Khách Hàng</span>} rules={[{ required: true }]}><Input placeholder="VD: KH001" /></Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="loaiNC" label={<span className="text-gray-300">Hình thức</span>} rules={[{ required: true }]}>
+                  <Select placeholder="-- Chọn hình thức --">
+                    <Option value="Mua">Mua</Option>
+                    <Option value="Thuê">Thuê</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="loaiBDS" label={<span className="text-gray-300">Phân loại BĐS</span>} rules={[{ required: true }]}>
+                  <Select placeholder="-- Chọn loại BĐS --">
+                    <Option value="Chung cư">Chung cư</Option>
+                    <Option value="Nhà phố">Nhà phố</Option>
+                    <Option value="Đất nền">Đất nền</Option>
+                    <Option value="Biệt thự">Biệt thự</Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={24}>
+                <Form.Item name="viTri" label={<span className="text-gray-300">Khu vực mong muốn</span>} rules={[{ required: true }]}><Input placeholder="Hà Nội, Cầu Giấy..." /></Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="dienTichMin" label={<span className="text-gray-300">Diện tích tối thiểu (m²)</span>}><Input type="number" /></Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="dienTichMax" label={<span className="text-gray-300">Diện tích tối đa (m²)</span>}><Input type="number" /></Form.Item>
+              </Col>
+              <Col span={24}>
+                <Form.Item name="ghiChu" label={<span className="text-gray-300">Ghi chú thêm</span>}><Input.TextArea rows={3} style={{ backgroundColor: '#141414', color: '#fff' }} /></Form.Item>
+              </Col>
+            </Row>
+            <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-[#333]">
+              <Button onClick={() => setIsFormVisible(false)} style={{ color: 'white', borderColor: '#555' }}>Hủy</Button>
+              <Button type="primary" htmlType="submit" style={{ fontWeight: 'bold', color: '#000' }}>Lưu thông tin</Button>
             </div>
-          </div>
-        </div>
-      )}
+          </Form>
+        </Modal>
 
-      <div style={{ width: '100%', maxWidth: '1200px', color: '#fff' }}>
-        <h2 style={{ borderBottom: '2px solid #333', paddingBottom: '10px' }}>📋 QUẢN LÝ NHU CẦU KHÁCH HÀNG</h2>
-        
-        <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <input 
-            placeholder="Tìm theo Mã KH, Loại BĐS, Vị trí..." 
-            value={searchKey}
-            onChange={(e) => setSearchKey(e.target.value)} 
-            style={{ padding: '10px', width: '300px', background: '#252830', border: '1px solid #444', color: '#fff', borderRadius: '4px' }} 
-          />
-          <button onClick={() => navigate('/employee/nhu-cau/create')} style={{ padding: '10px 20px', backgroundColor: '#f1c40f', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', marginLeft: 'auto' }}>
-            + Thêm Nhu cầu mới
-          </button>
-        </div>
+        <Modal 
+          title={<div style={{ color: GOLD_COLOR, textTransform: 'uppercase', fontSize: '18px' }}>Chi tiết nhu cầu</div>}
+          open={isDetailVisible} onCancel={() => setIsDetailVisible(false)} footer={null} width={700} closeIcon={<span style={{ color: '#fff' }}>✖</span>}
+        >
+          {detailData && (
+            <div className="mt-4">
+              <Descriptions bordered column={2} size="middle">
+                <Descriptions.Item label="Mã Phiếu NC" span={2}><Text style={{ color: GOLD_COLOR, fontWeight: 'bold', fontSize: '16px' }}>{detailData.id}</Text></Descriptions.Item>
+                <Descriptions.Item label="Mã Khách Hàng"><Text className="text-white">{detailData.khachHangId}</Text></Descriptions.Item>
+                <Descriptions.Item label="Nhân viên tạo"><Text className="text-white">{detailData.nhanVienId || 'Chưa rõ'}</Text></Descriptions.Item>
+                <Descriptions.Item label="Hình thức"><Text style={{ color: GOLD_COLOR }}>{detailData.loaiNC}</Text></Descriptions.Item>
+                <Descriptions.Item label="Loại BĐS">{detailData.loaiBDS}</Descriptions.Item>
+                <Descriptions.Item label="Diện tích">{detailData.dienTichMin || 0} - {detailData.dienTichMax || '∞'} m²</Descriptions.Item>
+                <Descriptions.Item label="Khu vực" span={2}>{detailData.viTri}</Descriptions.Item>
+                <Descriptions.Item label="Yêu cầu thêm" span={2}><div className="text-gray-300 italic">{detailData.ghiChu || 'Không có ghi chú thêm.'}</div></Descriptions.Item>
+              </Descriptions>
+            </div>
+          )}
+        </Modal>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', background: '#252830', borderRadius: '8px', overflow: 'hidden' }}>
-          <thead>
-            <tr style={{ background: '#333', textAlign: 'left' }}>
-              <th style={{ padding: '12px' }}>Mã NC</th>
-              <th style={{ padding: '12px' }}>Mã KH</th>
-              <th style={{ padding: '12px' }}>Loại</th>
-              <th style={{ padding: '12px' }}>Loại BĐS</th>
-              <th style={{ padding: '12px' }}>Vị trí</th>
-              <th style={{ padding: '12px' }}>Diện tích</th>
-              <th style={{ padding: '12px' }}>Ghi chú</th>
-              <th style={{ padding: '12px' }}>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentItems.length > 0 ? currentItems.map((nc: any) => (
-              <tr key={nc.id} style={{ borderBottom: '1px solid #3d4149' }}>
-                <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{nc.id}</td>
-                <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{nc.khachHangId}</td>
-                <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{nc.loaiNC}</td>
-                <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{nc.loaiBDS}</td>
-                <td style={{ padding: '12px', minWidth: '120px' }}>{nc.viTri}</td>
-                <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>{nc.dienTichMin} - {nc.dienTichMax}</td>
-                
-                <td 
-                  style={{ padding: '12px', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'help' }} 
-                  title={nc.ghiChu || ''}
-                >
-                  {nc.ghiChu || '—'}
-                </td>
-
-                <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
-                  <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                    <button 
-  onClick={() => navigate(`/employee/khach-hang/batdongsan?loaiBDS=${nc.loaiBDS}&viTri=${nc.viTri}`)} 
-  style={{ background: '#27ae60', color: '#fff', border: 'none', padding: '5px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
->
-  Khớp BĐS
-</button>
-                    <button onClick={() => navigate(`/employee/nhu-cau/${nc.id}`)} style={{ background: '#3498db', color: '#fff', border: 'none', padding: '5px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Xem</button>
-                    <button onClick={() => navigate(`/employee/nhu-cau/edit/${nc.id}`)} style={{ background: '#f1c40f', color: '#000', border: 'none', padding: '5px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Sửa</button>
-                    <button onClick={() => setDeleteModal({ isOpen: true, id: nc.id })} style={{ background: '#e74c3c', color: '#fff', border: 'none', padding: '5px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>Xóa</button>
-                  </div>
-                </td>
-              </tr>
-            )) : (
-              <tr><td colSpan={8} style={{ padding: '20px', textAlign: 'center' }}>Không tìm thấy dữ liệu</td></tr>
+        <Modal
+          title={
+            <div>
+              <div style={{ color: '#52c41a', textTransform: 'uppercase', fontSize: '18px', fontWeight: 'bold' }}>
+                <ThunderboltOutlined className="mr-2" /> Gợi ý Bất động sản phù hợp
+              </div>
+              {currentNhuCau && (
+                <div style={{ fontSize: '14px', color: '#aaa', marginTop: '4px', textTransform: 'none', fontWeight: 'normal' }}>
+                  Đang lọc cho KH: <strong style={{ color: '#fff' }}>{currentNhuCau.khachHangId}</strong> | Nhu cầu: <strong style={{ color: '#fff' }}>{currentNhuCau.loaiBDS} ({currentNhuCau.loaiNC})</strong>
+                </div>
+              )}
+            </div>
+          }
+          open={isSuggestModalVisible}
+          onCancel={() => setIsSuggestModalVisible(false)}
+          footer={null}
+          width={850}
+          closeIcon={<span style={{ color: '#fff' }}>✖</span>}
+        >
+          <div className="mt-4">
+            {suggestList.length > 0 ? (
+              <Table columns={suggestColumns} dataSource={suggestList} rowKey="id" loading={loadingSuggest} pagination={{ pageSize: 5 }} bordered />
+            ) : (
+              <div className="text-center py-10">
+                <Text style={{ color: '#ff4d4f', fontSize: '16px' }}>Hiện tại không có Bất động sản nào trong kho đáp ứng được nhu cầu này.</Text>
+              </div>
             )}
-          </tbody>
-        </table>
-
-        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '5px' }}>
-          <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} style={{ padding: '8px 15px', background: '#333', color: '#fff', border: 'none', cursor: 'pointer' }}>Trước</button>
-          <button style={{ padding: '8px 15px', background: '#f1c40f', color: '#000', border: 'none' }}>{currentPage}</button>
-          <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => prev + 1)} style={{ padding: '8px 15px', background: '#333', color: '#fff', border: 'none', cursor: 'pointer' }}>Sau</button>
-        </div>
+          </div>
+        </Modal>
       </div>
-    </div>
+    </ConfigProvider>
   );
 }

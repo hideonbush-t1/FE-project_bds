@@ -5,17 +5,15 @@ import { useFetch } from '../../hooks/useFetch';
 export function AdminThongBaoPage() {
   const [tieuDe, setTieuDe] = useState('');
   const [noiDung, setNoiDung] = useState('');
-  const [editingId, setEditingId] = useState<number | null>(null); // State để theo dõi xem đang Sửa hay Thêm mới
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Tự gọi API để lấy danh sách thay vì dùng CrudPage
   const { data, loading, error } = useFetch(async () => {
     const response = await http.get('/thong-bao');
     return response.data as Array<any>;
   }, ['/thong-bao']);
 
-  // HÀM XỬ LÝ THÊM & SỬA
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -23,16 +21,13 @@ export function AdminThongBaoPage() {
 
     try {
       if (editingId) {
-        // Nếu đang có ID Sửa -> Gọi API PATCH
         await http.patch(`/thong-bao/${editingId}`, { tieuDe, noiDung });
         setMessage('Cập nhật thông báo thành công!');
       } else {
-        // Nếu không có ID -> Gọi API POST (Thêm mới)
         await http.post('/thong-bao', { tieuDe, noiDung });
         setMessage('Tạo thông báo thành công!');
       }
       
-      // Xóa form và load lại trang
       setTieuDe('');
       setNoiDung('');
       setEditingId(null);
@@ -46,21 +41,19 @@ export function AdminThongBaoPage() {
     }
   };
 
-  // HÀM ĐƯA DỮ LIỆU LÊN FORM ĐỂ SỬA
   const handleEdit = (thongBao: any) => {
     setTieuDe(thongBao.tieuDe);
     setNoiDung(thongBao.noiDung);
-    setEditingId(thongBao.id); // Lưu ID để biết là đang sửa
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Cuộn lên đầu trang
+    setEditingId(thongBao.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // HÀM XÓA
   const handleDelete = async (id: number) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa thông báo này không?')) return;
     
     try {
       await http.delete(`/thong-bao/${id}`);
-      window.location.reload(); // Xóa xong tự load lại
+      window.location.reload();
     } catch (error) {
       console.error(error);
       alert('Có lỗi xảy ra khi xóa!');
@@ -74,7 +67,6 @@ export function AdminThongBaoPage() {
         <h2 className="h3 mb-0">Quản lý Thông báo</h2>
       </div>
 
-      {/* KHU VỰC FORM (Dùng chung cho cả Thêm và Sửa) */}
       <div className="panel mb-4 p-4">
         <h3 className="h5 mb-3">{editingId ? 'Sửa Thông Báo' : 'Tạo Thông Báo Mới'}</h3>
         
@@ -110,7 +102,6 @@ export function AdminThongBaoPage() {
             {isSubmitting ? 'Đang xử lý...' : (editingId ? 'Cập Nhật' : 'Gửi Thông Báo')}
           </button>
 
-          {/* Nút Hủy chỉ hiện khi đang ở chế độ Sửa */}
           {editingId && (
             <button 
               type="button" 
@@ -123,7 +114,6 @@ export function AdminThongBaoPage() {
         </form>
       </div>
 
-      {/* KHU VỰC BẢNG (Tự build để có cột Thao tác) */}
       <div className="panel">
         {loading && <div className="p-4">Đang tải...</div>}
         {error && <div className="p-4 text-danger">{error}</div>}
