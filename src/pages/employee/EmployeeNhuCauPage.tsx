@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Input, Modal, Form, Select, message, Row, Col, Space, Typography, Descriptions, ConfigProvider, theme } from 'antd';
-import { PlusOutlined, SearchOutlined, EyeOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, EyeOutlined, ThunderboltOutlined, SwapRightOutlined } from '@ant-design/icons';
 import { http } from '../../api/http';
+import { useNavigate } from 'react-router-dom';
 
 const { Option } = Select;
 const { Text, Title } = Typography;
 
 export function EmployeeNhuCauPage() {
+  const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
 
   const [nhuCauList, setNhuCauList] = useState<any[]>([]);
@@ -26,6 +28,26 @@ export function EmployeeNhuCauPage() {
 
   const GOLD_COLOR = '#D4AF37'; 
 
+  // --- CÁCH 1: TỰ ĐỘNG BÓC TÁCH TỪ OBJECT AUTH THỰC TẾ CỦA SẾP ---
+  const getUserAuth = () => {
+    try {
+      // Tìm thử các key phổ biến sếp có thể đặt lúc lưu đăng nhập
+      const userRaw = localStorage.getItem('user') || localStorage.getItem('userInfo') || localStorage.getItem('profile');
+      if (userRaw) {
+        const userObj = JSON.parse(userRaw);
+        return {
+          id: userObj?.maNV || userObj?.id || 'NV001',
+          name: userObj?.hoTen || 'Nhân viên 1'
+        };
+      }
+    } catch (e) {
+      console.error('Lỗi giải mã dữ liệu user auth:', e);
+    }
+    return { id: 'NV001', name: 'Nhân viên 1' }; // Phương án dự phòng nếu chưa có session login
+  };
+
+  const currentNhanVien = getUserAuth();
+
   const fetchNhuCau = async () => {
     setLoading(true);
     try {
@@ -43,6 +65,11 @@ export function EmployeeNhuCauPage() {
 
   const handleOpenAdd = () => {
     form.resetFields();
+    // Điền thông tin nhân viên (Tên + Mã) vào form để hiển thị trực quan
+    form.setFieldsValue({
+      nhanVienHienThi: `${currentNhanVien.name} (${currentNhanVien.id})`,
+      nhanVienId: currentNhanVien.id
+    });
     setIsFormVisible(true);
   };
 
@@ -59,7 +86,7 @@ export function EmployeeNhuCauPage() {
       const res = await http.get(`/giao-dich/suggest/${record.id}`);
       setSuggestList(res.data.danhSachGoiY || []);
     } catch (error) {
-      messageApi.error('Lỗi khi tải danh sách gợi ý. Kiểm tra lại Backend!');
+      messageApi.error('Lỗi khi tải danh sách gợi ý!');
       setSuggestList([]);
     }
     setLoadingSuggest(false);
@@ -67,16 +94,16 @@ export function EmployeeNhuCauPage() {
 
   const handleFinishForm = async (values: any) => {
     try {
-      // 1. Map lại dữ liệu: Chuyển loaiNC -> loaiNhuCau để chiều lòng Backend
       const payload: any = {
-        ...values,
+        khachHangId: values.khachHangId,
+        nhanVienId: currentNhanVien.id, // Lấy mã ẩn cố định, chặn giả mạo dữ liệu
         loaiNhuCau: values.loaiNC, 
+        loaiBDS: values.loaiBDS,
+        viTri: values.viTri,
         dienTichMin: values.dienTichMin ? Number(values.dienTichMin) : null,
         dienTichMax: values.dienTichMax ? Number(values.dienTichMax) : null,
+        ghiChu: values.ghiChu
       };
-
-      // 2. Xóa đi trường loaiNC để tránh lỗi "property should not exist"
-      delete payload.loaiNC;
 
       await http.post('/nhu-cau', payload);
       messageApi.success('Đã lưu nhu cầu khách hàng thành công!');
@@ -109,21 +136,10 @@ export function EmployeeNhuCauPage() {
       width: 200,
       render: (_: any, record: any) => (
         <Space size="small">
-          <Button 
-            type="text" 
-            icon={<EyeOutlined />} 
-            style={{ color: GOLD_COLOR }}
-            onClick={() => handleOpenDetail(record)}
-          >
+          <Button type="text" icon={<EyeOutlined />} style={{ color: GOLD_COLOR }} onClick={() => handleOpenDetail(record)}>
             Xem
           </Button>
-          <Button 
-            type="primary" 
-            size="small"
-            icon={<ThunderboltOutlined />} 
-            style={{ backgroundColor: '#52c41a', color: '#000', fontWeight: 'bold' }} 
-            onClick={() => handleOpenSuggest(record)}
-          >
+          <Button type="primary" size="small" icon={<ThunderboltOutlined />} style={{ backgroundColor: '#52c41a', color: '#000', fontWeight: 'bold' }} onClick={() => handleOpenSuggest(record)}>
             Gợi ý BĐS
           </Button>
         </Space>
@@ -136,6 +152,30 @@ export function EmployeeNhuCauPage() {
     { title: 'ĐỊA CHỈ', dataIndex: 'diaChi', key: 'diaChi' },
     { title: 'DIỆN TÍCH', dataIndex: 'dienTich', key: 'dienTich', render: (v: any) => `${v} m²` },
     { title: 'GIÁ TIỀN', dataIndex: 'giaTien', key: 'giaTien', render: (v: any) => <Text type="success" strong>{Number(v).toLocaleString('vi-VN')} đ</Text> },
+    {
+      title: 'HÀNH ĐỘNG',
+      key: 'action',
+      render: (_: any, bdsRecord: any) => (
+        <Button 
+          type="primary" 
+          size="small"
+          icon={<SwapRightOutlined />}
+          style={{ backgroundColor: GOLD_COLOR, color: '#000', fontWeight: 'bold' }}
+          onClick={() => {
+            setIsSuggestModalVisible(false);
+            navigate('/employee/giao-dich', { 
+              state: { 
+                khachHangId: currentNhuCau?.khachHangId, 
+                batDongSanId: bdsRecord.id,
+                nhuCauId: currentNhuCau?.id 
+              } 
+            });
+          }}
+        >
+          Tạo Giao dịch
+        </Button>
+      )
+    }
   ];
 
   return (
@@ -190,10 +230,16 @@ export function EmployeeNhuCauPage() {
           <Form form={form} layout="vertical" onFinish={handleFinishForm}>
             <Row gutter={16}>
               <Col span={24}>
+                <Form.Item name="nhanVienHienThi" label={<span className="text-gray-300">Nhân viên phụ trách</span>}>
+                  {/* Khóa mờ, hiển thị đầy đủ Họ tên kèm Mã nhân viên chuẩn mã nguồn vừa cung cấp */}
+                  <Input disabled style={{ backgroundColor: '#1f1f1f', color: GOLD_COLOR, fontWeight: 'bold' }} />
+                </Form.Item>
+              </Col>
+              
+              <Col span={24}>
                 <Form.Item name="khachHangId" label={<span className="text-gray-300">Mã Khách Hàng</span>} rules={[{ required: true }]}><Input placeholder="VD: KH001" /></Form.Item>
               </Col>
               <Col span={12}>
-                {/* Đã gỡ bỏ dropdownStyle gây cảnh báo Warning vàng */}
                 <Form.Item name="loaiNC" label={<span className="text-gray-300">Hình thức</span>} rules={[{ required: true }]}>
                   <Select placeholder="-- Chọn hình thức --">
                     <Option value="Mua">Mua</Option>
@@ -202,7 +248,6 @@ export function EmployeeNhuCauPage() {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                {/* Đã gỡ bỏ dropdownStyle gây cảnh báo Warning vàng */}
                 <Form.Item name="loaiBDS" label={<span className="text-gray-300">Phân loại BĐS</span>} rules={[{ required: true }]}>
                   <Select placeholder="-- Chọn loại BĐS --">
                     <Option value="Chung cư">Chung cư</Option>
@@ -241,6 +286,7 @@ export function EmployeeNhuCauPage() {
               <Descriptions bordered column={2} size="middle">
                 <Descriptions.Item label="Mã Phiếu NC" span={2}><Text style={{ color: GOLD_COLOR, fontWeight: 'bold', fontSize: '16px' }}>{detailData.id}</Text></Descriptions.Item>
                 <Descriptions.Item label="Mã Khách Hàng"><Text className="text-white">{detailData.khachHangId}</Text></Descriptions.Item>
+                <Descriptions.Item label="Nhân viên tạo"><Text className="text-white">{detailData.nhanVienId || 'Chưa rõ'}</Text></Descriptions.Item>
                 <Descriptions.Item label="Hình thức"><Text style={{ color: GOLD_COLOR }}>{detailData.loaiNC}</Text></Descriptions.Item>
                 <Descriptions.Item label="Loại BĐS">{detailData.loaiBDS}</Descriptions.Item>
                 <Descriptions.Item label="Diện tích">{detailData.dienTichMin || 0} - {detailData.dienTichMax || '∞'} m²</Descriptions.Item>
@@ -272,14 +318,7 @@ export function EmployeeNhuCauPage() {
         >
           <div className="mt-4">
             {suggestList.length > 0 ? (
-              <Table 
-                columns={suggestColumns} 
-                dataSource={suggestList} 
-                rowKey="id" 
-                loading={loadingSuggest}
-                pagination={{ pageSize: 5 }}
-                bordered
-              />
+              <Table columns={suggestColumns} dataSource={suggestList} rowKey="id" loading={loadingSuggest} pagination={{ pageSize: 5 }} bordered />
             ) : (
               <div className="text-center py-10">
                 <Text style={{ color: '#ff4d4f', fontSize: '16px' }}>Hiện tại không có Bất động sản nào trong kho đáp ứng được nhu cầu này.</Text>

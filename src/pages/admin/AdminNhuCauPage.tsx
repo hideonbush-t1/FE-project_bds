@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Input, Modal, Form, Select, message, Row, Col, Space, Typography, Descriptions, ConfigProvider, theme, Tag } from 'antd';
-import { PlusOutlined, SearchOutlined, EyeOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { Table, Button, Input, Modal, Form, Select, message, Row, Col, Space, Typography, Descriptions, ConfigProvider, theme } from 'antd';
+import { PlusOutlined, SearchOutlined, EyeOutlined, ThunderboltOutlined, SwapRightOutlined } from '@ant-design/icons';
 import { http } from '../../api/http';
+import { useNavigate } from 'react-router-dom'; // Thêm hook điều hướng
 
 const { Option } = Select;
 const { Text, Title } = Typography;
 
 export function AdminNhuCauPage() {
+  const navigate = useNavigate(); // Khởi tạo hook chuyển trang
+  const [messageApi, contextHolder] = message.useMessage();
+
   const [nhuCauList, setNhuCauList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -31,7 +35,7 @@ export function AdminNhuCauPage() {
       const res = await http.get('/nhu-cau'); 
       setNhuCauList(res.data);
     } catch (error) {
-      message.error('Không thể tải danh sách nhu cầu!');
+      messageApi.error('Không thể tải danh sách nhu cầu!');
     }
     setLoading(false);
   };
@@ -50,18 +54,15 @@ export function AdminNhuCauPage() {
     setIsDetailVisible(true);
   };
 
-  // --- HÀM XỬ LÝ NÚT GỢI Ý BẤT ĐỘNG SẢN ---
   const handleOpenSuggest = async (record: any) => {
     setCurrentNhuCau(record);
     setLoadingSuggest(true);
     setIsSuggestModalVisible(true);
     try {
-      // Gọi API matching (Tùy theo endpoint Backend bạn định nghĩa, ví dụ: /giao-dich/suggest/:id)
       const res = await http.get(`/giao-dich/suggest/${record.id}`);
-      // Dựa theo cấu trúc backend trả về: { thongTinNhuCau, soLuongPhuHop, danhSachGoiY }
       setSuggestList(res.data.danhSachGoiY || []);
     } catch (error) {
-      message.error('Lỗi khi tải danh sách gợi ý. Kiểm tra lại Backend!');
+      messageApi.error('Lỗi khi tải danh sách gợi ý. Kiểm tra lại Backend!');
       setSuggestList([]);
     }
     setLoadingSuggest(false);
@@ -69,16 +70,23 @@ export function AdminNhuCauPage() {
 
   const handleFinishForm = async (values: any) => {
     try {
-      await http.post('/nhu-cau', values);
-      message.success('Đã lưu nhu cầu thành công!');
+      const payload: any = {
+        ...values,
+        loaiNhuCau: values.loaiNC, 
+        dienTichMin: values.dienTichMin ? Number(values.dienTichMin) : null,
+        dienTichMax: values.dienTichMax ? Number(values.dienTichMax) : null,
+      };
+      delete payload.loaiNC;
+
+      await http.post('/nhu-cau', payload);
+      messageApi.success('Đã lưu nhu cầu thành công!');
       setIsFormVisible(false);
       fetchNhuCau();
     } catch (error) {
-      message.error('Lỗi khi tạo nhu cầu mới!');
+      messageApi.error('Lỗi khi tạo nhu cầu mới!');
     }
   };
 
-  // Cột cho bảng Danh sách Nhu Cầu
   const columns = [
     { title: 'MÃ NC', dataIndex: 'id', key: 'id', render: (t: any) => <Text strong className="text-white">{t}</Text> },
     { title: 'KHÁCH HÀNG', dataIndex: 'khachHangId', key: 'khachHangId', render: (t: any) => <span className="text-white font-semibold">{t}</span> },
@@ -101,22 +109,10 @@ export function AdminNhuCauPage() {
       width: 200,
       render: (_: any, record: any) => (
         <Space size="small">
-          <Button 
-            type="text" 
-            icon={<EyeOutlined />} 
-            style={{ color: GOLD_COLOR }}
-            onClick={() => handleOpenDetail(record)}
-          >
+          <Button type="text" icon={<EyeOutlined />} style={{ color: GOLD_COLOR }} onClick={() => handleOpenDetail(record)}>
             Xem
           </Button>
-          {/* NÚT THỰC HIỆN TASK MATCHING GỢI Ý */}
-          <Button 
-            type="primary" 
-            size="small"
-            icon={<ThunderboltOutlined />} 
-            style={{ backgroundColor: '#52c41a', color: '#000', fontWeight: 'bold' }} // Màu xanh lá nổi bật
-            onClick={() => handleOpenSuggest(record)}
-          >
+          <Button type="primary" size="small" icon={<ThunderboltOutlined />} style={{ backgroundColor: '#52c41a', color: '#000', fontWeight: 'bold' }} onClick={() => handleOpenSuggest(record)}>
             Gợi ý BĐS
           </Button>
         </Space>
@@ -124,12 +120,38 @@ export function AdminNhuCauPage() {
     },
   ];
 
-  // Cột cho bảng hiển thị danh sách BĐS được gợi ý trong Modal
+  // --- CỘT DỮ LIỆU TRONG MODAL GỢI Ý ĐÃ ĐƯỢC THÊM NÚT CHUYỂN TRANG ---
   const suggestColumns = [
     { title: 'MÃ BĐS', dataIndex: 'id', key: 'id', render: (t: any) => <Text strong style={{ color: GOLD_COLOR }}>{t}</Text> },
     { title: 'ĐỊA CHỈ', dataIndex: 'diaChi', key: 'diaChi' },
     { title: 'DIỆN TÍCH', dataIndex: 'dienTich', key: 'dienTich', render: (v: any) => `${v} m²` },
     { title: 'GIÁ TIỀN', dataIndex: 'giaTien', key: 'giaTien', render: (v: any) => <Text type="success" strong>{Number(v).toLocaleString('vi-VN')} đ</Text> },
+    {
+      title: 'HÀNH ĐỘNG',
+      key: 'action',
+      render: (_: any, bdsRecord: any) => (
+        <Button 
+          type="primary" 
+          size="small"
+          icon={<SwapRightOutlined />}
+          style={{ backgroundColor: GOLD_COLOR, color: '#000', fontWeight: 'bold' }}
+          onClick={() => {
+          setIsSuggestModalVisible(false);
+          
+          // Gửi thêm kèm mã nhuCauId sang màn giao dịch để kích hoạt trigger tự động đóng
+          navigate('/admin/giao-dich', { 
+            state: { 
+              khachHangId: currentNhuCau?.khachHangId, 
+              batDongSanId: bdsRecord.id,
+              nhuCauId: currentNhuCau?.id // << THÊM DÒNG NÀY VÀO SẾP NHÉ
+            } 
+          });
+        }}
+        >
+          Tạo Giao dịch
+        </Button>
+      )
+    }
   ];
 
   return (
@@ -144,9 +166,9 @@ export function AdminNhuCauPage() {
         }
       }}
     >
+      {contextHolder}
       <div className="p-6 bg-[#141414] min-h-[85vh] text-white">
         
-        {/* HEADER */}
         <div className="flex justify-between items-center mb-6 border-b border-[#333] pb-4">
           <Title level={3} style={{ margin: 0, color: GOLD_COLOR, textTransform: 'uppercase' }}>
             Nhu cầu khách hàng
@@ -164,7 +186,6 @@ export function AdminNhuCauPage() {
           </Space>
         </div>
 
-        {/* TABLE CHÍNH */}
         <Table 
           columns={columns} 
           dataSource={nhuCauList.filter((i: any) => {
@@ -190,7 +211,7 @@ export function AdminNhuCauPage() {
               </Col>
               <Col span={12}>
                 <Form.Item name="loaiNC" label={<span className="text-gray-300">Hình thức</span>} rules={[{ required: true }]}>
-                  <Select placeholder="-- Chọn hình thức --" dropdownStyle={{ backgroundColor: '#1f1f1f', color: '#fff' }}>
+                  <Select placeholder="-- Chọn hình thức --">
                     <Option value="Mua">Mua</Option>
                     <Option value="Thuê">Thuê</Option>
                   </Select>
@@ -198,7 +219,7 @@ export function AdminNhuCauPage() {
               </Col>
               <Col span={12}>
                 <Form.Item name="loaiBDS" label={<span className="text-gray-300">Phân loại BĐS</span>} rules={[{ required: true }]}>
-                  <Select placeholder="-- Chọn loại BĐS --" dropdownStyle={{ backgroundColor: '#1f1f1f', color: '#fff' }}>
+                  <Select placeholder="-- Chọn loại BĐS --">
                     <Option value="Chung cư">Chung cư</Option>
                     <Option value="Nhà phố">Nhà phố</Option>
                     <Option value="Đất nền">Đất nền</Option>
@@ -246,7 +267,7 @@ export function AdminNhuCauPage() {
           )}
         </Modal>
 
-        {/* MODAL GỢI Ý BẤT ĐỘNG SẢN (TASK SE2108d) */}
+        {/* MODAL GỢI Ý BẤT ĐỘNG SẢN */}
         <Modal
           title={
             <div>
