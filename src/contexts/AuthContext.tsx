@@ -10,8 +10,8 @@ type User = {
   email: string;
   soDienThoai?: string | null;
   chucVu: string;
-  role?: string; 
-  Role?: string; 
+  role: string;      // Bắt buộc có trường này
+  isAdmin: boolean;  // Thêm vào để tránh lỗi thiếu thuộc tính
 };
 
 type AuthContextValue = {
@@ -26,9 +26,20 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  
+  // Khởi tạo state từ localStorage
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('user');
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  
   const [loading, setLoading] = useState(true);
 
+  // Kiểm tra phiên đăng nhập khi load trang
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (!token) {
@@ -52,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     const userData = response.data.user as User;
     setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
     
     const role = String(userData?.Role || userData?.role).toLowerCase();
 
@@ -76,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
     setUser(null);
 
     // 💡 BƯỚC 3: Bắn pop-up đăng xuất
@@ -93,7 +106,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(userData as User);
   };
 
-  const value = useMemo(() => ({ user, loading, login, logout, refreshProfile }), [user, loading]);
+  const value = useMemo(() => ({ 
+    user, 
+    loading, 
+    login, 
+    logout, 
+    refreshProfile 
+  }), [user, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
