@@ -17,11 +17,11 @@ import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { AdminNhanVienPage } from '../pages/admin/AdminNhanVienPage';
 import { AdminKhachHangPage } from '../pages/admin/AdminKhachHangPage';
 import { AdminBatDongSanPage } from '../pages/admin/AdminBatDongSanPage';
-import { AdminNhuCauPage } from '../pages/admin/AdminNhuCauPage';
 import { AdminGiaoDichPage } from '../pages/admin/AdminGiaoDichPage';
 import { AdminThongBaoPage } from '../pages/admin/AdminThongBaoPage';
 import { AdminHoSoBieuMauPage } from '../pages/admin/AdminHoSoBieuMauPage';
 import { AdminProfilePage } from '../pages/admin/AdminProfilePage';
+// Lưu ý: Đã xóa AdminNhuCauPage
 
 // ================== EMPLOYEE PAGES ==================
 import { EmployeeDashboardPage } from '../pages/employee/EmployeeDashboardPage';
@@ -35,14 +35,7 @@ import { EmployeeProfilePage } from '../pages/employee/EmployeeProfilePage';
 import EmployeeKhachHangPage from '../pages/employee/EmployeeKhachHangPage';
 import ThemKhachHang from '../pages/employee/khachhang/ThemKhachHang';
 import ChiTietKhachHang from '../pages/employee/khachhang/ChiTietKhachHang';
-import SuaKhachHang from '../pages/employee/khachhang/SuaKhachHang'; // Đã thêm mới
-import DanhSachBDS from '../pages/employee/khachhang/batdongsan/DanhSachBDS';
-
-// --- CỤM TÍNH NĂNG NHU CẦU ---
-import EmployeeNhuCauPage from '../pages/employee/EmployeeNhuCauPage'
-import ThemNhuCau from '../pages/employee/nhucau/ThemNhuCau';
-import ChiTietNhuCau from '../pages/employee/nhucau/ChiTietNhuCau';
-import SuaNhuCau from '../pages/employee/nhucau/SuaNhuCau'; // Đã đổi thành SuaNhuCau
+import SuaKhachHang from '../pages/employee/khachhang/SuaKhachHang';
 
 export default function AppRoutes() {
   return (
@@ -63,7 +56,6 @@ export default function AppRoutes() {
           <Route path="nhan-vien" element={<AdminNhanVienPage />} />
           <Route path="khach-hang" element={<AdminKhachHangPage />} />
           <Route path="bat-dong-san" element={<AdminBatDongSanPage />} />
-          <Route path="nhu-cau" element={<AdminNhuCauPage />} />
           <Route path="giao-dich" element={<AdminGiaoDichPage />} />
           <Route path="thong-bao" element={<AdminThongBaoPage />} />
           <Route path="ho-so-bieu-mau" element={<AdminHoSoBieuMauPage />} />
@@ -79,13 +71,8 @@ export default function AppRoutes() {
           <Route path="khach-hang/create" element={<ThemKhachHang />} />
           <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
           <Route path="khach-hang/edit/:id" element={<SuaKhachHang />} />
-          <Route path="khach-hang/batdongsan" element={<DanhSachBDS />} /> {/* <--- THÊM DÒNG NÀY */}
 
-          {/* Cụm Nhu Cầu */}
-          <Route path="nhu-cau" element={<EmployeeNhuCauPage />} />
-          <Route path="nhu-cau/create" element={<ThemNhuCau />} />
-          <Route path="nhu-cau/:id" element={<ChiTietNhuCau />} />
-          <Route path="nhu-cau/edit/:id" element={<SuaNhuCau />} />
+          {/* Cụm Nhu Cầu đã được xóa bỏ hoàn toàn */}
 
           <Route path="bat-dong-san" element={<EmployeeBatDongSanPage />} />
           <Route path="giao-dich" element={<EmployeeGiaoDichPage />} />

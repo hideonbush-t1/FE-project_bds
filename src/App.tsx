@@ -41,13 +41,6 @@ import EmployeeKhachHangPage from './pages/employee/EmployeeKhachHangPage';
 import ThemKhachHang from './pages/employee/khachhang/ThemKhachHang';
 import ChiTietKhachHang from './pages/employee/khachhang/ChiTietKhachHang';
 import SuaKhachHang from './pages/employee/khachhang/SuaKhachHang';
-import DanhSachBDS from './pages/employee/khachhang/batdongsan/DanhSachBDS';
-
-// Chức năng Nhu cầu
-import EmployeeNhuCauPage from './pages/employee/EmployeeNhuCauPage';
-import ChiTietNhuCau from './pages/employee/nhucau/ChiTietNhuCau';
-import SuaNhuCau from './pages/employee/nhucau/SuaNhuCau';
-import ThemNhuCau from './pages/employee/nhucau/ThemNhuCau';
 
 export function App() {
   return (
@@ -100,17 +93,11 @@ export function App() {
           <Route path="khach-hang/create" element={<ThemKhachHang />} />
           <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
           <Route path="khach-hang/edit/:id" element={<SuaKhachHang />} />
-          <Route path="khach-hang/batdongsan" element={<DanhSachBDS />} />
           
           <Route path="bat-dong-san" element={<ListBatDongSan />} />
           <Route path="bat-dong-san/add" element={<AddBatDongSan />} />
           <Route path="bat-dong-san/edit/:id" element={<EditBatDongSan />} />
           <Route path="bat-dong-san/detail/:id" element={<DetailBatDongSan />} />
-          
-          <Route path="nhu-cau" element={<EmployeeNhuCauPage />} />
-          <Route path="nhu-cau/create" element={<ThemNhuCau />} />
-          <Route path="nhu-cau/:id" element={<ChiTietNhuCau />} />
-          <Route path="nhu-cau/edit/:id" element={<SuaNhuCau />} />
 
           <Route path="giao-dich" element={<EmployeeGiaoDichPage />} />
           <Route path="thong-bao" element={<EmployeeThongBaoPage />} />

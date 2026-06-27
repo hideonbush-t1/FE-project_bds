@@ -1,8 +1,8 @@
 import { http } from '../api/http';
 
 export type LoginResponse = {
-  // Sửa thành access_token để khớp với Backend
-  access_token: string; 
+  // Sửa lại thành accessToken (không có dấu gạch dưới)
+  accessToken: string; 
   user: {
     id: string;
     maNV: string;
@@ -10,7 +10,7 @@ export type LoginResponse = {
     email: string;
     soDienThoai?: string | null;
     chucVu: string;
-    role: string; // PHẢI THÊM TRƯỜNG NÀY VÀO
+    isAdmin: boolean; // Dùng boolean để check quyền dễ hơn
   };
 };
 
