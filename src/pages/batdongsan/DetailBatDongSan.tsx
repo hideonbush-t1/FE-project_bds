@@ -18,7 +18,13 @@ const DetailBatDongSan = () => {
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data) setBds(data);
+        if (data) {
+          // Sắp xếp: Ưu tiên đưa Ảnh Đại Diện lên đầu danh sách hiển thị
+          if (data.hinhAnhs && data.hinhAnhs.length > 0) {
+            data.hinhAnhs.sort((a: any, b: any) => (b.anhDaiDien ? 1 : -1) - (a.anhDaiDien ? 1 : -1));
+          }
+          setBds(data);
+        }
       })
       .catch(() => toast.error('Không thể tải chi tiết tài sản!'));
   }, [id, token]);
@@ -40,7 +46,7 @@ const DetailBatDongSan = () => {
           <button 
             className="btn-back" 
             style={{ padding: '8px 16px', backgroundColor: '#2d2e42', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }} 
-            onClick={() => navigate('/admin/bat-dong-san')}
+            onClick={() => navigate(-1)}
           >
             Quay lại
           </button>
@@ -51,24 +57,42 @@ const DetailBatDongSan = () => {
             {bds.tieuDe || 'Chưa cập nhật tiêu đề'}
           </h3>
           
-          {/* PHẦN HIỂN THỊ ẢNH TỪ CLOUDINARY */}
+          {/* PHẦN HIỂN THỊ TÀI NGUYÊN (ẢNH/VIDEO) */}
           {bds.hinhAnhs && bds.hinhAnhs.length > 0 ? (
             <div className="image-gallery" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginBottom: '30px' }}>
               {bds.hinhAnhs.map((anh: any) => (
-                <div key={anh.id} style={{ position: 'relative' }}>
-                  <img 
-                    src={anh.duongDan} // Link thẳng tới Cloudinary
-                    alt={`Bất động sản ${bds.id}`} 
-                    className="gallery-img" 
-                    style={{ width: '250px', height: '180px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #2d2e42' }}
-                  />
+                <div key={anh.id} style={{ position: 'relative', width: '250px', height: '180px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #2d2e42', backgroundColor: '#000' }}>
+                  
+                  {/* Nhận diện linh hoạt Video và Hình ảnh */}
+                  {anh.duongDan && anh.duongDan.match(/\.(mp4|webm|ogg)$/i) ? (
+                    <video 
+                      src={anh.duongDan} 
+                      controls
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <img 
+                      src={anh.duongDan || ''}
+                      alt={`Bất động sản ${bds.id}`} 
+                      className="gallery-img" 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      onError={(e) => { 
+                        // BƯỚC 1: Ngắt vòng lặp vô hạn
+                        e.currentTarget.onerror = null; 
+                        
+                        // BƯỚC 2: Dùng ảnh SVG nội bộ thay vì gọi lên mạng
+                        e.currentTarget.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22250%22%20height%3D%22180%22%20viewBox%3D%220%200%20250%20180%22%3E%3Crect%20fill%3D%22%232d2e42%22%20width%3D%22250%22%20height%3D%22180%22%2F%3E%3Ctext%20fill%3D%22%23ffffff%22%20font-family%3D%22sans-serif%22%20font-size%3D%2216%22%20dy%3D%2210.5%22%20font-weight%3D%22bold%22%20x%3D%2250%25%22%20y%3D%2250%25%22%20text-anchor%3D%22middle%22%3EL%E1%BB%97i%20%E1%BA%A3nh%3C%2Ftext%3E%3C%2Fsvg%3E';
+                      }}
+                    />
+                  )}
+
                   {/* Đánh dấu ảnh đại diện */}
                   {anh.anhDaiDien && (
                     <span style={{ 
                       position: 'absolute', top: '10px', left: '10px', 
                       backgroundColor: '#e74c3c', color: '#fff', 
                       padding: '4px 8px', borderRadius: '4px',
-fontSize: '12px', fontWeight: 'bold' 
+                      fontSize: '12px', fontWeight: 'bold' 
                     }}>
                       Ảnh đại diện
                     </span>
@@ -90,7 +114,6 @@ fontSize: '12px', fontWeight: 'bold'
             <div className="detail-item"><strong>Tình trạng:</strong> <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>{bds.tinhTrang}</span></div>
             <div className="detail-item"><strong>Ngày khởi tạo:</strong> <span style={{ color: '#c4c4d4' }}>{new Date(bds.ngayTao).toLocaleDateString('vi-VN')}</span></div>
             
-            {/* Các trường mới bổ sung */}
             <div className="detail-item"><strong>Hướng:</strong> <span style={{ color: '#c4c4d4' }}>{bds.huong || 'Chưa cập nhật'}</span></div>
             <div className="detail-item"><strong>Vị trí:</strong> <span style={{ color: '#c4c4d4' }}>{bds.viTri || 'Chưa cập nhật'}</span></div>
           </div>
@@ -109,7 +132,7 @@ fontSize: '12px', fontWeight: 'bold'
               padding: '15px', 
               borderRadius: '8px', 
               border: '1px solid #2d2e42',
-              whiteSpace: 'pre-wrap' // Giữ nguyên định dạng xuống dòng của đoạn văn
+              whiteSpace: 'pre-wrap'
             }}>
               {bds.ghiChu || 'Không có ghi chú nào cho tài sản này.'}
             </div>
