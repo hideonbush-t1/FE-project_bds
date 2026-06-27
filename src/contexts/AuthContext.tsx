@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { toast } from 'react-toastify'; // 💡 BƯỚC 1: Thêm import thư viện pop-up
 
-// Định nghĩa kiểu User khớp với phản hồi từ Backend
 type User = {
   id: string;
   maNV: string;
@@ -50,39 +50,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authService
       .profile()
       .then((response) => {
-        const userData = response.data?.user || response.data;
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
+        const userData = response.data?.user || response.data?.data || response.data;
+        setUser(userData as User);
       })
-      .catch(() => {
-        logout();
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (maNV: string, matKhau: string) => {
-    // 1. Gọi API login
     const response = await authService.login(maNV, matKhau);
-    const data = response.data;
-
-    // 2. Lưu token (đúng tên trường accessToken)
-    if (data.accessToken) {
-      localStorage.setItem('accessToken', data.accessToken);
-    }
+    localStorage.setItem('accessToken', response.data.access_token);
     
-    // 3. Lưu thông tin user
-    const userData = data.user as User;
+    const userData = response.data.user as User;
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     
-    // 4. Dọn dẹp UI (modal backdrop nếu có)
+    const role = String(userData?.Role || userData?.role).toLowerCase();
+
+    // Diệt màn đen... (giữ nguyên code của bạn)
     document.body.classList.remove('modal-open');
     document.body.style.overflow = 'auto';
-    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-    
-    // 5. Điều hướng dựa trên role
-    const role = String(userData?.role || '').toLowerCase();
-    if (role === 'admin') {
+    document.documentElement.style.overflow = 'auto';
+    document.body.style.paddingRight = '0px';
+    document.documentElement.style.paddingRight = '0px';
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+
+    // 💡 BƯỚC 2: Bắn pop-up thành công
+    toast.success('Đăng nhập thành công!');
+
+    if (role === 'admin' || role === '1') {
       navigate('/admin/dashboard', { replace: true }); 
     } else {
       navigate('/employee/dashboard', { replace: true });
@@ -93,18 +90,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
     setUser(null);
-    window.location.href = '/';
+
+    // 💡 BƯỚC 3: Bắn pop-up đăng xuất
+    toast.success('Đăng xuất thành công!');
+
+    // Delay 0.8 giây để pop-up kịp hiện ra cho người dùng nhìn thấy trước khi F5 trang
+    setTimeout(() => {
+      window.location.href = '/login'; // Sửa '/' thành '/login' để đá về thẳng trang đăng nhập
+    }, 800);
   };
 
   const refreshProfile = async () => {
-    try {
-      const response = await authService.profile();
-      const userData = response.data?.user || response.data;
-      setUser(userData as User);
-      localStorage.setItem('user', JSON.stringify(userData));
-    } catch (error) {
-      logout();
-    }
+    const response = await authService.profile();
+    const userData = response.data?.user || response.data?.data || response.data;
+    setUser(userData as User);
   };
 
   const value = useMemo(() => ({ 
