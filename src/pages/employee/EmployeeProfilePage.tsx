@@ -1,22 +1,19 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { http } from '../../api/http'; 
+import { toast } from 'react-toastify'; // 💡 Import thêm pop-up
 
 export function EmployeeProfilePage() {
-  const { user, refreshProfile } = useAuth();
+  const { user } = useAuth();
   
-  // State để chuyển Tab
   const [activeTab, setActiveTab] = useState<'thong-tin' | 'doi-mat-khau'>('thong-tin');
 
-  // State cho Đổi mật khẩu
   const [matKhauCu, setMatKhauCu] = useState('');
   const [matKhauMoi, setMatKhauMoi] = useState('');
   const [xacNhanMatKhau, setXacNhanMatKhau] = useState('');
   
-  // State thông báo
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  // Hàm xử lý đổi mật khẩu
   const handleDoiMatKhau = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage({ type: '', text: '' });
@@ -32,10 +29,18 @@ export function EmployeeProfilePage() {
         newPassword: matKhauMoi,
       });
       
-      setMessage({ type: 'success', text: 'Đổi mật khẩu thành công!' });
-      setMatKhauCu('');
-      setMatKhauMoi('');
-      setXacNhanMatKhau('');
+      // 1. Bắn thông báo UI & Pop-up
+      setMessage({ type: 'success', text: 'Đổi mật khẩu thành công! Vui lòng đăng nhập lại.' });
+      toast.success('Đổi mật khẩu thành công! Vui lòng đăng nhập lại.');
+      
+      // 2. Tước quyền (Xóa Token)
+      localStorage.removeItem('accessToken');
+
+      // 3. Đợi 1.5 giây để người dùng đọc thông báo rồi F5 đá về Login
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500);
+
     } catch (error: any) {
       const errorMsg = Array.isArray(error.response?.data?.message) 
         ? error.response.data.message[0] 
@@ -48,12 +53,10 @@ export function EmployeeProfilePage() {
     }
   };
 
-  // BIẾN STYLE CHUNG ĐỂ ÉP MÀU CHỮ TRẮNG CHO INPUT
   const inputStyle = { color: '#fff', backgroundColor: 'transparent' };
 
   return (
     <div className="content-wrapper">
-      {/* THÊM ĐOẠN STYLE NÀY VÀO ĐỂ ĐỔI MÀU PLACEHOLDER */}
       <style>{`
         .form-control::placeholder {
           color: #aaa !important;
@@ -66,7 +69,6 @@ export function EmployeeProfilePage() {
       </div>
 
       <div className="row">
-        {/* Cột trái: Menu chuyển Tab & Avatar */}
         <div className="col-md-4 mb-4">
           <div className="card">
             <div className="card-body text-center">
@@ -107,7 +109,6 @@ export function EmployeeProfilePage() {
           </div>
         </div>
 
-        {/* Cột phải: Nội dung chi tiết */}
         <div className="col-md-8">
           <div className="card">
             <div className="card-header">
@@ -117,14 +118,12 @@ export function EmployeeProfilePage() {
             </div>
             <div className="card-body">
               
-              {/* Hiển thị thông báo */}
               {message.text && (
                 <div className={`alert alert-${message.type} mb-4`}>
                   {message.text}
                 </div>
               )}
 
-              {/* TAB 1: THÔNG TIN CÁ NHÂN */}
               {activeTab === 'thong-tin' && (
                 <div className="form-row">
                   <div className="form-group">
@@ -150,7 +149,6 @@ export function EmployeeProfilePage() {
                 </div>
               )}
 
-              {/* TAB 2: ĐỔI MẬT KHẨU */}
               {activeTab === 'doi-mat-khau' && (
                 <form onSubmit={handleDoiMatKhau}>
                   <div className="form-group mb-4">

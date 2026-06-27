@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 
 const links = [
   ['Dashboard', '/admin/dashboard'],
+  ['Thống kê', '/admin/thong-ke'],
   ['Nhân viên', '/admin/nhan-vien'],
   ['Khách hàng', '/admin/khach-hang'],
   ['Bất động sản', '/admin/bat-dong-san'],

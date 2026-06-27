@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { http } from '../../api/http'; 
+import { toast } from 'react-toastify'; // 💡 Import thêm pop-up
 
 export function AdminProfilePage() {
-  const { user, refreshProfile } = useAuth();
+  const { user } = useAuth();
   
   // State để chuyển Tab
   const [activeTab, setActiveTab] = useState<'thong-tin' | 'doi-mat-khau'>('thong-tin');
@@ -32,10 +33,18 @@ export function AdminProfilePage() {
         newPassword: matKhauMoi,
       });
       
-      setMessage({ type: 'success', text: 'Đổi mật khẩu thành công!' });
-      setMatKhauCu('');
-      setMatKhauMoi('');
-      setXacNhanMatKhau('');
+      // 1. Bắn thông báo UI & Pop-up
+      setMessage({ type: 'success', text: 'Đổi mật khẩu thành công! Vui lòng đăng nhập lại.' });
+      toast.success('Đổi mật khẩu thành công! Vui lòng đăng nhập lại.');
+      
+      // 2. Tước quyền (Xóa Token)
+      localStorage.removeItem('accessToken');
+
+      // 3. Đợi 1.5 giây để người dùng đọc thông báo rồi F5 đá về Login
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500);
+
     } catch (error: any) {
       const errorMsg = Array.isArray(error.response?.data?.message) 
         ? error.response.data.message[0] 
@@ -53,7 +62,6 @@ export function AdminProfilePage() {
 
   return (
     <div className="content-wrapper">
-      {/* THÊM ĐOẠN STYLE NÀY VÀO ĐỂ ĐỔI MÀU PLACEHOLDER */}
       <style>{`
         .form-control::placeholder {
           color: #aaa !important;
