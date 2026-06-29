@@ -16,7 +16,6 @@ import { SchedulePage } from './pages/public/SchedulePage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminThongKePage } from './pages/admin/AdminThongKePage';
 import { AdminNhanVienPage } from './pages/admin/AdminNhanVienPage';
-import { AdminKhachHangPage } from './pages/admin/AdminKhachHangPage';
 import { AdminNhuCauPage } from './pages/admin/AdminNhuCauPage';
 import { AdminGiaoDichPage } from './pages/admin/AdminGiaoDichPage';
 import { AdminThongBaoPage } from './pages/admin/AdminThongBaoPage';
@@ -39,7 +38,7 @@ import AddBatDongSan from './pages/batdongsan/AddBatDongSan';
 import EditBatDongSan from './pages/batdongsan/EditBatDongSan';
 import DetailBatDongSan from './pages/batdongsan/DetailBatDongSan';
 
-// Chức năng Khách hàng
+import AdminKhachHangPage  from './pages/admin/AdminKhachHangPage';
 import EmployeeKhachHangPage from './pages/employee/EmployeeKhachHangPage';
 import ThemKhachHang from './pages/employee/khachhang/ThemKhachHang';
 import ChiTietKhachHang from './pages/employee/khachhang/ChiTietKhachHang';
@@ -85,6 +84,7 @@ export function App() {
         <Route path="khach-hang" element={<AdminKhachHangPage />} />
         <Route path="khach-hang/create" element={<ThemKhachHang />} />
         <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
+        <Route path="khach-hang/edit/:id" element={<SuaKhachHang />} />
         
         {/* Quản lý Bất Động Sản (Từ code mới) */}
         <Route path="bat-dong-san" element={<ListBatDongSan />} />

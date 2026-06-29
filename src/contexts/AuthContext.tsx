@@ -11,7 +11,7 @@ type User = {
   soDienThoai?: string | null;
   chucVu: string;
   role: string;
-  Role?: string; // Hỗ trợ cả 2 kiểu viết hoa/thường từ backend
+  Role?: string; 
 };
 
 type AuthContextValue = {
@@ -42,7 +42,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authService
       .profile()
       .then((response) => {
-        // Xử lý linh hoạt các kiểu response từ backend
         const userData = response.data?.user || response.data?.data || response.data;
         setUser(userData as User);
         localStorage.setItem('user', JSON.stringify(userData));
@@ -70,11 +69,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     toast.success('Đăng nhập thành công!');
 
     const role = String(userData?.Role || userData?.role || '').toLowerCase();
-    if (role === 'admin' || role === '1') {
-      navigate('/admin/dashboard', { replace: true }); 
-    } else {
-      navigate('/employee/dashboard', { replace: true });
-    }
+    
+    // 💡 SỬA Ở ĐÂY: Dùng setTimeout và window.location.href để ép tải lại trang
+    setTimeout(() => {
+      if (role === 'admin' || role === '1') {
+        window.location.href = '/admin/dashboard'; 
+      } else {
+        window.location.href = '/employee/dashboard';
+      }
+    }, 1000);
   };
 
   const logout = () => {
@@ -83,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     toast.success('Đăng xuất thành công!');
     setTimeout(() => {
-      window.location.href = '/login';
+      window.location.href = '/';
     }, 800);
   };
 
