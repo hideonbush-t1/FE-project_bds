@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -7,42 +7,89 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../batdongsan/BatDongSan.css'; 
 
+// 1. Đã gỡ bỏ maNV và matKhau khỏi schema vì hệ thống tự động sinh ra
 const schema = yup.object().shape({
-  maNV: yup.string().required('Mã nhân viên không được để trống'),
   hoTen: yup.string().required('Họ tên không được để trống'),
   email: yup.string().email('Email không hợp lệ').required('Vui lòng nhập email'),
   soDienThoai: yup.string().required('Vui lòng nhập số điện thoại'),
-  chucVu: yup.string().required('Vui lòng nhập chức vụ'),
+  chucVu: yup.string().required('Vui lòng chọn chức vụ'),
   Role: yup.string().required('Vui lòng chọn quyền'),
-  matKhau: yup.string().min(6, 'Mật khẩu phải từ 6 ký tự').required('Vui lòng nhập mật khẩu'),
 });
 
 export const AddNhanVien = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('accessToken') || '';
+  
+  // 2. State lưu mã nhân viên tự động
+  const [maNVMoi, setMaNVMoi] = useState('Đang tải...');
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
       Role: 'employee',
+      chucVu: ''
     }
   });
 
+  // 3. Tự động lấy danh sách và tính toán mã nhân viên tiếp theo (Không bị trùng)
+  useEffect(() => {
+    fetch('http://localhost:4000/nhan-vien', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        const list = Array.isArray(data) ? data : (data.data || []);
+        const maxCode = list.reduce((max: number, nv: any) => {
+          const num = parseInt((nv.id || nv.maNV || '').replace('NV', ''), 10);
+          return !isNaN(num) ? Math.max(max, num) : max;
+        }, 0);
+        
+        setMaNVMoi(`NV${(maxCode + 1).toString().padStart(3, '0')}`);
+      })
+      .catch(() => toast.error('Lỗi khi tải dữ liệu mã nhân viên!'));
+  }, [token]);
+
+  // 4. Hàm tạo mật khẩu ngẫu nhiên (8 ký tự)
+  const generateRandomPassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+    let pass = '';
+    for (let i = 0; i < 8; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return pass;
+  };
+
   const onSubmit = (data: any) => {
-    // Với dữ liệu text bình thường, chỉ cần dùng JSON.stringify (Không cần FormData)
+    // Tạo pass ngẫu nhiên
+    const randomPassword = generateRandomPassword();
+    
+    // Gộp dữ liệu form với mã NV và pass tự động
+    const payload = {
+      ...data,
+      maNV: maNVMoi, 
+      matKhau: randomPassword 
+    };
+
     fetch('http://localhost:4000/nhan-vien', {
       method: 'POST',
       headers: { 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     })
       .then(async (response) => {
         if (response.ok) {
-          toast.success("Thêm mới nhân viên thành công!");
+          // 5. Hiện pop-up thông báo MẬT KHẨU để Admin copy gửi cho nhân viên
+          toast.success(
+            <div>
+              Thêm thành công!<br/>
+              Mật khẩu user là: <strong style={{color: '#f1c40f'}}>{randomPassword}</strong>
+            </div>, 
+            { autoClose: false } // Giữ thông báo trên màn hình để Admin kịp copy
+          );
           reset();
-          setTimeout(() => navigate('/admin/nhan-vien'), 1500);
+          setTimeout(() => navigate('/admin/nhan-vien'), 4000);
         } else {
           const errorData = await response.json();
           let errorMessage = Array.isArray(errorData.message) ? errorData.message[0] : errorData.message;
@@ -54,16 +101,20 @@ export const AddNhanVien = () => {
 
   return (
     <div className="bds-container">
-      <ToastContainer position="top-right" autoClose={2000} />
+      <ToastContainer position="top-right" />
       <div className="bds-form-card">
         <h2>Thêm Nhân viên mới</h2>
+        <p style={{ color: '#bdc3c7', marginBottom: '20px', fontStyle: 'italic' }}>
+          * Mã nhân viên và Mật khẩu sẽ được hệ thống sinh tự động để đảm bảo bảo mật.
+        </p>
         
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="form-grid">
+            
+            {/* 💡 Ô Nhập Mã NV đã bị khóa (readOnly) và tự động điền */}
             <div className="form-group">
-              <label>Mã Nhân Viên (*)</label>
-              <input type="text" {...register('maNV')} placeholder="VD: NV001" />
-              {errors.maNV && <span style={{ color: '#e74c3c', fontSize: '12px' }}>{errors.maNV.message}</span>}
+              <label>Mã Nhân Viên (Tự động)</label>
+              <input type="text" value={maNVMoi} readOnly style={{ backgroundColor: '#2d2e42', cursor: 'not-allowed', color: '#f1c40f', fontWeight: 'bold' }} />
             </div>
 
             <div className="form-group">
@@ -87,6 +138,7 @@ export const AddNhanVien = () => {
             <div className="form-group">
               <label>Chức vụ (*)</label>
               <select {...register('chucVu')}>
+                <option value="">-- Chọn chức vụ --</option>
                 <option value="Nhân viên kinh doanh">Nhân viên kinh doanh</option>
                 <option value="Trưởng phòng">Trưởng phòng</option>
                 <option value="Kế toán">Kế toán</option>
@@ -103,18 +155,15 @@ export const AddNhanVien = () => {
               <label>Quyền hệ thống (*)</label>
               <select {...register('Role')}>
                 <option value="employee">Nhân viên (Employee)</option>
-                <option value="admin">Quản trị viên (Admin)</option>
+                {/* Ẩn option Admin đi để tránh vô ý tạo thêm tài khoản Admin */}
               </select>
             </div>
-
-            <div className="form-group full-width">
-              <label>Mật khẩu đăng nhập (*)</label>
-              <input type="password" {...register('matKhau')} placeholder="Tối thiểu 6 ký tự" />
-              {errors.matKhau && <span style={{ color: '#e74c3c', fontSize: '12px' }}>{errors.matKhau.message}</span>}
-            </div>
+            
+            {/* 💡 Ô nhập mật khẩu đã được xóa bỏ hoàn toàn */}
+            
           </div>
 
-          <div className="form-actions">
+          <div className="form-actions mt-4">
             <button type="button" className="btn-cancel" onClick={() => navigate('/admin/nhan-vien')}>Hủy bỏ</button>
             <button type="submit" className="btn-submit">Lưu hệ thống</button>
           </div>

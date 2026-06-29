@@ -31,6 +31,7 @@ import { EmployeeGiaoDichPage } from './pages/employee/EmployeeGiaoDichPage';
 import { EmployeeThongBaoPage } from './pages/employee/EmployeeThongBaoPage';
 import { EmployeeHoSoBieuMauPage } from './pages/employee/EmployeeHoSoBieuMauPage';
 import { EmployeeProfilePage } from './pages/employee/EmployeeProfilePage';
+import { EmployeeNhuCauPage } from './pages/employee/EmployeeNhuCauPage';
 
 // Chức năng Bất động sản
 import ListBatDongSan from './pages/batdongsan/ListBatDongSan';
@@ -113,6 +114,7 @@ export function App() {
           <Route path="bat-dong-san/edit/:id" element={<EditBatDongSan />} />
           <Route path="bat-dong-san/detail/:id" element={<DetailBatDongSan />} />
 
+          <Route path="nhu-cau" element={<EmployeeNhuCauPage />} />
           <Route path="giao-dich" element={<EmployeeGiaoDichPage />} />
           <Route path="thong-bao" element={<EmployeeThongBaoPage />} />
           <Route path="ho-so-bieu-mau" element={<EmployeeHoSoBieuMauPage />} />
