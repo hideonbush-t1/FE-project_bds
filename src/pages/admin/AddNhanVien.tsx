@@ -7,7 +7,6 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../batdongsan/BatDongSan.css'; 
 
-// 1. Đã gỡ bỏ maNV và matKhau khỏi schema vì hệ thống tự động sinh ra
 const schema = yup.object().shape({
   hoTen: yup.string().required('Họ tên không được để trống'),
   email: yup.string().email('Email không hợp lệ').required('Vui lòng nhập email'),
@@ -20,7 +19,6 @@ export const AddNhanVien = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('accessToken') || '';
   
-  // 2. State lưu mã nhân viên tự động
   const [maNVMoi, setMaNVMoi] = useState('Đang tải...');
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
@@ -31,7 +29,6 @@ export const AddNhanVien = () => {
     }
   });
 
-  // 3. Tự động lấy danh sách và tính toán mã nhân viên tiếp theo (Không bị trùng)
   useEffect(() => {
     fetch('http://localhost:4000/nhan-vien', {
       headers: { 'Authorization': `Bearer ${token}` }
@@ -49,25 +46,11 @@ export const AddNhanVien = () => {
       .catch(() => toast.error('Lỗi khi tải dữ liệu mã nhân viên!'));
   }, [token]);
 
-  // 4. Hàm tạo mật khẩu ngẫu nhiên (8 ký tự)
-  const generateRandomPassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
-    let pass = '';
-    for (let i = 0; i < 8; i++) {
-      pass += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return pass;
-  };
-
   const onSubmit = (data: any) => {
-    // Tạo pass ngẫu nhiên
-    const randomPassword = generateRandomPassword();
-    
-    // Gộp dữ liệu form với mã NV và pass tự động
     const payload = {
       ...data,
       maNV: maNVMoi, 
-      matKhau: randomPassword 
+      matKhau: '123456' 
     };
 
     fetch('http://localhost:4000/nhan-vien', {
@@ -80,16 +63,19 @@ export const AddNhanVien = () => {
     })
       .then(async (response) => {
         if (response.ok) {
-          // 5. Hiện pop-up thông báo MẬT KHẨU để Admin copy gửi cho nhân viên
           toast.success(
-            <div>
-              Thêm thành công!<br/>
-              Mật khẩu user là: <strong style={{color: '#f1c40f'}}>{randomPassword}</strong>
+            <div style={{ lineHeight: '1.6' }}>
+              ✅ <strong>Thêm mới thành công!</strong><br/>
+              🔑 Mật khẩu mặc định: <span style={{ color: '#f1c40f', fontSize: '1.2rem', letterSpacing: '1px', fontWeight: 'bold' }}>123456</span><br/>
+              <span style={{ color: '#ff9f43', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                * Hãy nhắc nhân viên đổi mật khẩu ngay khi đăng nhập nhé!
+              </span>
             </div>, 
-            { autoClose: false } // Giữ thông báo trên màn hình để Admin kịp copy
+            { autoClose: 10000 } // 💡 ĐÃ TĂNG LÊN 10 GIÂY
           );
+          
           reset();
-          setTimeout(() => navigate('/admin/nhan-vien'), 4000);
+          setTimeout(() => navigate('/admin/nhan-vien'), 10000);
         } else {
           const errorData = await response.json();
           let errorMessage = Array.isArray(errorData.message) ? errorData.message[0] : errorData.message;
@@ -104,14 +90,13 @@ export const AddNhanVien = () => {
       <ToastContainer position="top-right" />
       <div className="bds-form-card">
         <h2>Thêm Nhân viên mới</h2>
+        {/* 💡 ĐÃ SỬA: Thay đổi dòng nhắc nhở trên form */}
         <p style={{ color: '#bdc3c7', marginBottom: '20px', fontStyle: 'italic' }}>
-          * Mã nhân viên và Mật khẩu sẽ được hệ thống sinh tự động để đảm bảo bảo mật.
+          * Mã nhân viên được sinh tự động. Mật khẩu mặc định cho mọi tài khoản mới là <strong>123456</strong>.
         </p>
         
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="form-grid">
-            
-            {/* 💡 Ô Nhập Mã NV đã bị khóa (readOnly) và tự động điền */}
             <div className="form-group">
               <label>Mã Nhân Viên (Tự động)</label>
               <input type="text" value={maNVMoi} readOnly style={{ backgroundColor: '#2d2e42', cursor: 'not-allowed', color: '#f1c40f', fontWeight: 'bold' }} />
@@ -155,12 +140,8 @@ export const AddNhanVien = () => {
               <label>Quyền hệ thống (*)</label>
               <select {...register('Role')}>
                 <option value="employee">Nhân viên (Employee)</option>
-                {/* Ẩn option Admin đi để tránh vô ý tạo thêm tài khoản Admin */}
               </select>
             </div>
-            
-            {/* 💡 Ô nhập mật khẩu đã được xóa bỏ hoàn toàn */}
-            
           </div>
 
           <div className="form-actions mt-4">
