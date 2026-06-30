@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { http } from '../../api/http';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function AdminKhachHangPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Tự động xác định xem đang ở admin hay employee để làm đường dẫn động
+  const pathPrefix = location.pathname.startsWith('/admin') ? '/admin' : '/employee';
+
   const [khachHangList, setKhachHangList] = useState([]);
   const [searchKey, setSearchKey] = useState('');
   const [loaiKH, setLoaiKH] = useState('');
@@ -37,7 +42,7 @@ export default function AdminKhachHangPage() {
       toast.success("Xóa khách hàng thành công!");
       fetchKhachHang();
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Không thể xóa khách hàng này do có dữ liệu liên quan!";
+      const errorMessage = error.response?.data?.message || "Không thể xóa khách hàng này!";
       toast.error(errorMessage);
     } finally {
       setDeleteModal({ isOpen: false, id: null });
@@ -63,7 +68,6 @@ export default function AdminKhachHangPage() {
             style={{ padding: '10px', width: '250px', background: '#252830', border: '1px solid #444', color: '#fff', borderRadius: '4px' }} 
           />
           
-          {/* ĐÃ SỬA: Thay đổi options thành Cá nhân / Doanh nghiệp */}
           <select onChange={(e) => setLoaiKH(e.target.value)} style={{ padding: '10px', background: '#252830', border: '1px solid #444', color: '#fff', borderRadius: '4px' }}>
             <option value="">-- Tất cả loại --</option>
             <option value="Cá nhân">Cá nhân</option>
@@ -73,7 +77,7 @@ export default function AdminKhachHangPage() {
           <button 
             onClick={() => {
                const user = JSON.parse(localStorage.getItem('user') || '{}');
-               navigate('/admin/khach-hang/create', { state: { nhanVienId: user.id } });
+               navigate(`${pathPrefix}/khach-hang/create`, { state: { nhanVienId: user.id } });
             }} 
             style={{ padding: '10px 20px', backgroundColor: '#f1c40f', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', marginLeft: 'auto' }}
           >
@@ -81,7 +85,6 @@ export default function AdminKhachHangPage() {
           </button>
         </div>
 
-        {/* Bảng danh sách */}
         <table style={{ width: '100%', borderCollapse: 'collapse', background: '#252830', borderRadius: '8px', overflow: 'hidden' }}>
           <thead>
             <tr style={{ background: '#333', textAlign: 'left' }}>
@@ -90,7 +93,6 @@ export default function AdminKhachHangPage() {
               <th style={{ padding: '15px' }}>Loại</th>
               <th style={{ padding: '15px' }}>Địa chỉ</th>
               <th style={{ padding: '15px' }}>SĐT</th>
-              <th style={{ padding: '15px' }}>CMND</th>
               <th style={{ padding: '15px' }}>NV Quản Lý</th>
               <th style={{ padding: '15px' }}>Thao tác</th>
             </tr>
@@ -101,25 +103,23 @@ export default function AdminKhachHangPage() {
                 <td style={{ padding: '15px' }}>{kh.id}</td>
                 <td style={{ padding: '15px' }}>{kh.hoTen}</td>
                 <td style={{ padding: '15px' }}>{kh.loaiKH}</td>
-                <td style={{ padding: '15px', color: '#aaa', fontSize: '0.9em' }}>{kh.diaChi || '—'}</td>
+                <td style={{ padding: '15px', color: '#aaa' }}>{kh.diaChi || '—'}</td>
                 <td style={{ padding: '15px' }}>{kh.soDienThoai}</td>
-                <td style={{ padding: '15px' }}>{kh.soCMND || '—'}</td>
                 <td style={{ padding: '15px' }}>{kh.nhanVienId || '—'}</td>
                 <td style={{ padding: '15px' }}>
-                  <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                    <button onClick={() => navigate(`/admin/khach-hang/${kh.id}`)} style={{ background: '#3498db', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Xem</button>
-                    <button onClick={() => navigate(`/admin/khach-hang/edit/${kh.id}`)} style={{ background: '#f1c40f', color: '#000', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Sửa</button>
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <button onClick={() => navigate(`${pathPrefix}/khach-hang/${kh.id}`)} style={{ background: '#3498db', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Xem</button>
+                    <button onClick={() => navigate(`${pathPrefix}/khach-hang/edit/${kh.id}`)} style={{ background: '#f1c40f', color: '#000', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Sửa</button>
                     <button onClick={() => setDeleteModal({ isOpen: true, id: kh.id })} style={{ background: '#e74c3c', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Xóa</button>
                   </div>
                 </td>
               </tr>
             )) : (
-              <tr><td colSpan={8} style={{ padding: '20px', textAlign: 'center' }}>Không tìm thấy dữ liệu</td></tr>
+              <tr><td colSpan={7} style={{ padding: '20px', textAlign: 'center' }}>Không tìm thấy dữ liệu</td></tr>
             )}
           </tbody>
         </table>
 
-        {/* Phân trang */}
         <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '5px' }}>
           <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} style={{ padding: '8px 15px', background: '#333', color: '#fff', border: 'none', cursor: 'pointer' }}>Trước</button>
           <button style={{ padding: '8px 15px', background: '#f1c40f', color: '#000', border: 'none' }}>{currentPage}</button>
@@ -127,7 +127,6 @@ export default function AdminKhachHangPage() {
         </div>
       </div>
       
-      {/* Modal xóa */}
       {deleteModal.isOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
           <div style={{ background: '#252830', padding: '30px', borderRadius: '8px', border: '1px solid #444', color: '#fff' }}>

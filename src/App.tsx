@@ -5,6 +5,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { PublicLayout } from './layouts/PublicLayout';
 import { AdminLayout } from './layouts/AdminLayout';
 import { EmployeeLayout } from './layouts/EmployeeLayout';
+
 // Các trang Public
 import { HomePage } from './pages/public/HomePage';
 import { NotificationsPage } from './pages/public/NotificationsPage';
@@ -16,6 +17,7 @@ import { SchedulePage } from './pages/public/SchedulePage';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminThongKePage } from './pages/admin/AdminThongKePage';
 import { AdminNhanVienPage } from './pages/admin/AdminNhanVienPage';
+import AdminKhachHangPage from './pages/admin/AdminKhachHangPage';
 import { AdminNhuCauPage } from './pages/admin/AdminNhuCauPage';
 import { AdminGiaoDichPage } from './pages/admin/AdminGiaoDichPage';
 import { AdminThongBaoPage } from './pages/admin/AdminThongBaoPage';
@@ -33,13 +35,13 @@ import { EmployeeHoSoBieuMauPage } from './pages/employee/EmployeeHoSoBieuMauPag
 import { EmployeeProfilePage } from './pages/employee/EmployeeProfilePage';
 import { EmployeeNhuCauPage } from './pages/employee/EmployeeNhuCauPage';
 
-// Chức năng Bất động sản
+// Chức năng Bất động sản (Dùng chung)
 import ListBatDongSan from './pages/batdongsan/ListBatDongSan';
 import AddBatDongSan from './pages/batdongsan/AddBatDongSan';
 import EditBatDongSan from './pages/batdongsan/EditBatDongSan';
 import DetailBatDongSan from './pages/batdongsan/DetailBatDongSan';
 
-import AdminKhachHangPage  from './pages/admin/AdminKhachHangPage';
+// Chức năng Khách hàng (Dùng chung)
 import EmployeeKhachHangPage from './pages/employee/EmployeeKhachHangPage';
 import ThemKhachHang from './pages/employee/khachhang/ThemKhachHang';
 import ChiTietKhachHang from './pages/employee/khachhang/ChiTietKhachHang';
@@ -58,40 +60,36 @@ export function App() {
         theme="dark" 
       />
       
-    <Routes>
-      {/* 1. Các tuyến đường công khai (Public) */}
-      <Route element={<PublicLayout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/thong-bao" element={<NotificationsPage />} />
-        <Route path="/lich-lam-viec" element={<SchedulePage />} />
-        <Route path="/ho-tro" element={<SupportPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-      </Route>
+      <Routes>
+        {/* 1. Các tuyến đường công khai (Public) */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/thong-bao" element={<NotificationsPage />} />
+          <Route path="/lich-lam-viec" element={<SchedulePage />} />
+          <Route path="/ho-tro" element={<SupportPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Route>
 
-      {/* 2. Các tuyến đường cho Quản trị viên (Admin) */}
-      <Route
-        path="/admin"
-        element={<AdminLayout />} 
-      >
-        <Route path="dashboard" element={<AdminDashboardPage />} />
-        <Route path="thong-ke" element={<AdminThongKePage />} />
-        <Route path="nhan-vien" element={<AdminNhanVienPage />} />
-
-        <Route path="nhan-vien/add" element={<AddNhanVien />} />
-        <Route path="nhan-vien/edit/:id" element={<EditNhanVien />} />
-        <Route path="nhan-vien/detail/:id" element={<DetailNhanVien />} />
-        
-        {/* ĐÃ SỬA: Đủ 3 route cho Khách Hàng (Danh sách, Thêm, Chi tiết) */}
-        <Route path="khach-hang" element={<AdminKhachHangPage />} />
-        <Route path="khach-hang/create" element={<ThemKhachHang />} />
-        <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
-        <Route path="khach-hang/edit/:id" element={<SuaKhachHang />} />
-        
-        {/* Quản lý Bất Động Sản (Từ code mới) */}
-        <Route path="bat-dong-san" element={<ListBatDongSan />} />
-        <Route path="bat-dong-san/add" element={<AddBatDongSan />} />
-        <Route path="bat-dong-san/edit/:id" element={<EditBatDongSan />} />
-        <Route path="bat-dong-san/detail/:id" element={<DetailBatDongSan />} />
+        {/* 2. Các tuyến đường cho Quản trị viên (Admin) */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="thong-ke" element={<AdminThongKePage />} />
+          <Route path="nhan-vien" element={<AdminNhanVienPage />} />
+          <Route path="nhan-vien/add" element={<AddNhanVien />} />
+          <Route path="nhan-vien/edit/:id" element={<EditNhanVien />} />
+          <Route path="nhan-vien/detail/:id" element={<DetailNhanVien />} />
+          
+          {/* Quản lý Khách Hàng - Admin */}
+          <Route path="khach-hang" element={<AdminKhachHangPage />} />
+          <Route path="khach-hang/create" element={<ThemKhachHang />} />
+          <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
+          <Route path="khach-hang/edit/:id" element={<SuaKhachHang />} />
+          
+          {/* Quản lý Bất Động Sản - Admin */}
+          <Route path="bat-dong-san" element={<ListBatDongSan />} />
+          <Route path="bat-dong-san/add" element={<AddBatDongSan />} />
+          <Route path="bat-dong-san/edit/:id" element={<EditBatDongSan />} />
+          <Route path="bat-dong-san/detail/:id" element={<DetailBatDongSan />} />
 
           <Route path="nhu-cau" element={<AdminNhuCauPage />} />
           <Route path="giao-dich" element={<AdminGiaoDichPage />} />
@@ -104,11 +102,13 @@ export function App() {
         <Route path="/employee" element={<EmployeeLayout />}>
           <Route path="dashboard" element={<EmployeeDashboardPage />} />
           
+          {/* Quản lý Khách Hàng - Employee */}
           <Route path="khach-hang" element={<EmployeeKhachHangPage />} />
           <Route path="khach-hang/create" element={<ThemKhachHang />} />
           <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
           <Route path="khach-hang/edit/:id" element={<SuaKhachHang />} />
           
+          {/* Quản lý Bất Động Sản - Employee */}
           <Route path="bat-dong-san" element={<ListBatDongSan />} />
           <Route path="bat-dong-san/add" element={<AddBatDongSan />} />
           <Route path="bat-dong-san/edit/:id" element={<EditBatDongSan />} />
@@ -121,12 +121,9 @@ export function App() {
           <Route path="profile" element={<EmployeeProfilePage />} />
         </Route>
 
-      {/* 4. Tự động chuyển hướng về trang chủ nếu gõ sai URL */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-
-    {/* 💡 BƯỚC QUAN TRỌNG: Đặt cục ToastContainer ở cuối cùng */}
-      <ToastContainer position="top-right" autoClose={3000} />
+        {/* 4. Tự động chuyển hướng về trang chủ nếu gõ sai URL */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </>
   );
 }

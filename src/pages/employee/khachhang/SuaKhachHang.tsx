@@ -8,6 +8,10 @@ export default function SuaKhachHang() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Tự động nhận diện quyền qua URL để điều hướng quay lại
+  const isRouteAdmin = location.pathname.includes('/admin');
+  const backUrl = isRouteAdmin ? '/admin/khach-hang' : '/employee/khach-hang';
+
   const [formData, setFormData] = useState({
     maKH: 'Đang tải...',
     loaiKH: 'Cá nhân',
@@ -21,11 +25,7 @@ export default function SuaKhachHang() {
     soCMND: ''
   });
 
-  // Tự động nhận diện quyền qua URL để điều hướng quay lại
-  const isRouteAdmin = location.pathname.includes('/admin');
-  const backUrl = isRouteAdmin ? '/admin/khach-hang' : '/employee/khach-hang';
-
-  // Styles tái sử dụng chuẩn như trang Thêm
+  // Styles tái sử dụng
   const labelStyle = { fontWeight: 'bold', color: '#fff', marginBottom: '8px', display: 'block' };
   const inputStyle = { 
     width: '100%', 
@@ -72,8 +72,8 @@ export default function SuaKhachHang() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     try {
-      // Bỏ mã KH và mã NV ra để không can thiệp vào khoá chính trong Database
-      const { maKH, nhanVienId, ...updateData } = formData;
+      // Bỏ mã KH ra để không can thiệp vào khoá chính trong Database
+      const { maKH, ...updateData } = formData;
       const payload = {
         ...updateData,
         ngaySinh: formData.ngaySinh ? new Date(formData.ngaySinh).toISOString() : new Date().toISOString()
@@ -81,7 +81,7 @@ export default function SuaKhachHang() {
 
       await http.patch(`/khach-hang/${id}`, payload);
       toast.success('Cập nhật thành công!');
-      setTimeout(() => navigate(backUrl), 1500);
+      setTimeout(() => navigate(backUrl), 1000);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật!';
       toast.error(errorMessage);
@@ -130,6 +130,7 @@ export default function SuaKhachHang() {
               <select name="gioiTinh" value={formData.gioiTinh} onChange={handleChange} style={inputStyle}>
                 <option value="Nam">Nam</option>
                 <option value="Nữ">Nữ</option>
+                <option value="Khác">Khác</option>
               </select>
             </div>
           </div>
