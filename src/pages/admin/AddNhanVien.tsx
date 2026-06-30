@@ -71,11 +71,11 @@ export const AddNhanVien = () => {
                 * Hãy nhắc nhân viên đổi mật khẩu ngay khi đăng nhập nhé!
               </span>
             </div>, 
-            { autoClose: 10000 } // 💡 ĐÃ TĂNG LÊN 10 GIÂY
+            { autoClose: 6000 } 
           );
           
           reset();
-          setTimeout(() => navigate('/admin/nhan-vien'), 10000);
+          setTimeout(() => navigate('/admin/nhan-vien'), 6000);
         } else {
           const errorData = await response.json();
           let errorMessage = Array.isArray(errorData.message) ? errorData.message[0] : errorData.message;
