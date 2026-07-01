@@ -23,7 +23,7 @@ import { AdminGiaoDichPage } from './pages/admin/AdminGiaoDichPage';
 import { AdminThongBaoPage } from './pages/admin/AdminThongBaoPage';
 import { AdminHoSoBieuMauPage } from './pages/admin/AdminHoSoBieuMauPage';
 import { AdminProfilePage } from './pages/admin/AdminProfilePage';
-import { AddNhanVien } from './pages/admin/AddNhanVien';
+import AddNhanVien from './pages/admin/AddNhanVien';
 import { EditNhanVien } from './pages/admin/EditNhanVien';
 import { DetailNhanVien } from './pages/admin/DetailNhanVien';
 

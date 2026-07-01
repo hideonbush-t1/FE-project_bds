@@ -1,155 +1,202 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../batdongsan/BatDongSan.css'; 
 
-const schema = yup.object().shape({
-  hoTen: yup.string().required('Họ tên không được để trống'),
-  email: yup.string().email('Email không hợp lệ').required('Vui lòng nhập email'),
-  soDienThoai: yup.string().required('Vui lòng nhập số điện thoại'),
-  chucVu: yup.string().required('Vui lòng chọn chức vụ'),
-  Role: yup.string().required('Vui lòng chọn quyền'),
-});
+interface NhanVien {
+  id: string;
+  maNV: string;
+  hoTen: string;
+  email: string;
+  soDienThoai: string;
+  chucVu: string;
+  role?: string;
+  Role?: string;
+}
 
-export const AddNhanVien = () => {
+export default function AddNhanVien() {
+  const [danhSachNV, setDanhSachNV] = useState<NhanVien[]>([]);
+  const [searchText, setSearchText] = useState(''); 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8; 
+
   const navigate = useNavigate();
   const token = localStorage.getItem('accessToken') || '';
-  
-  const [maNVMoi, setMaNVMoi] = useState('Đang tải...');
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
-    resolver: yupResolver(schema),
-    defaultValues: {
-      Role: 'employee',
-      chucVu: ''
-    }
-  });
+  // 💡 1. LẤY THÔNG TIN TÀI KHOẢN ĐANG ĐĂNG NHẬP
+  const userRaw = localStorage.getItem('user');
+  const currentUser = userRaw ? JSON.parse(userRaw) : null;
 
   useEffect(() => {
     fetch('http://localhost:4000/nhan-vien', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
-      .then(res => res.json())
-      .then(data => {
-        const list = Array.isArray(data) ? data : (data.data || []);
-        const maxCode = list.reduce((max: number, nv: any) => {
-          const num = parseInt((nv.id || nv.maNV || '').replace('NV', ''), 10);
-          return !isNaN(num) ? Math.max(max, num) : max;
-        }, 0);
-        
-        setMaNVMoi(`NV${(maxCode + 1).toString().padStart(3, '0')}`);
+      .then((response) => response.json())
+      .then((data) => {
+        let list: NhanVien[] = [];
+        if (Array.isArray(data)) {
+          list = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          list = data.data; 
+        }
+
+        // 💡 2. LOGIC LỌC: CHỈ ẨN CHÍNH MÌNH, HIỂN THỊ CẢ ADMIN KHÁC
+        list = list.filter((nv) => {
+          // So sánh mã NV của từng dòng với mã NV của người đang đăng nhập
+          const isMe = currentUser && (nv.id === currentUser.id || nv.maNV === currentUser.maNV || nv.id === currentUser.maNV);
+          
+          if (isMe) {
+            return false; // Nếu là "Tôi" -> Bỏ qua không hiển thị
+          }
+          return true; // Nếu là người khác (Employee hay Admin đều được) -> Hiển thị
+        });
+
+        // Sắp xếp xuôi từ A -> Z (NV001, NV002, NV003...)
+        list.sort((a, b) => {
+          const idA = a.id || a.maNV || '';
+          const idB = b.id || b.maNV || '';
+          return idA.localeCompare(idB); 
+        });
+
+        setDanhSachNV(list);
       })
-      .catch(() => toast.error('Lỗi khi tải dữ liệu mã nhân viên!'));
+      .catch(() => {
+        toast.error('Không thể kết nối đến máy chủ Backend!');
+        setDanhSachNV([]);
+      });
   }, [token]);
 
-  const onSubmit = (data: any) => {
-    const payload = {
-      ...data,
-      maNV: maNVMoi, 
-      matKhau: '123456' 
-    };
-
-    fetch('http://localhost:4000/nhan-vien', {
-      method: 'POST',
-      headers: { 
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload),
-    })
-      .then(async (response) => {
-        if (response.ok) {
-          toast.success(
-            <div style={{ lineHeight: '1.6' }}>
-              ✅ <strong>Thêm mới thành công!</strong><br/>
-              🔑 Mật khẩu mặc định: <span style={{ color: '#f1c40f', fontSize: '1.2rem', letterSpacing: '1px', fontWeight: 'bold' }}>123456</span><br/>
-              <span style={{ color: '#ff9f43', fontSize: '0.85rem', fontStyle: 'italic' }}>
-                * Hãy nhắc nhân viên đổi mật khẩu ngay khi đăng nhập nhé!
-              </span>
-            </div>, 
-            { autoClose: 6000 } 
-          );
-          
-          reset();
-          setTimeout(() => navigate('/admin/nhan-vien'), 6000);
-        } else {
-          const errorData = await response.json();
-          let errorMessage = Array.isArray(errorData.message) ? errorData.message[0] : errorData.message;
-          toast.error(`Lỗi: ${errorMessage}`);
-        }
+  const handleDelete = (id: string) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa nhân viên này?')) {
+      fetch(`http://localhost:4000/nhan-vien/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
       })
-      .catch(() => toast.error("Mất kết nối máy chủ!"));
+        .then(async (response) => {
+          if (response.ok) {
+            toast.success('Đã xóa nhân viên thành công!');
+            setDanhSachNV((prev) => prev.filter((item) => item.id !== id && item.maNV !== id));
+          } else {
+            const err = await response.json();
+            toast.error(`Không thể xóa: ${err.message || 'Lỗi dữ liệu'}`);
+          }
+        })
+        .catch(() => toast.error('Lỗi kết nối mạng!'));
+    }
   };
+
+  const filteredList = danhSachNV.filter((nv) => {
+    if (!searchText) return true;
+    const lowerSearch = searchText.toLowerCase();
+    return (
+      (nv.id && nv.id.toLowerCase().includes(lowerSearch)) ||
+      (nv.hoTen && nv.hoTen.toLowerCase().includes(lowerSearch)) ||
+      (nv.soDienThoai && nv.soDienThoai.includes(lowerSearch))
+    );
+  });
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredList.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredList.length / itemsPerPage);
 
   return (
     <div className="bds-container">
-      <ToastContainer position="top-right" />
-      <div className="bds-form-card">
-        <h2>Thêm Nhân viên mới</h2>
-        {/* 💡 ĐÃ SỬA: Thay đổi dòng nhắc nhở trên form */}
-        <p style={{ color: '#bdc3c7', marginBottom: '20px', fontStyle: 'italic' }}>
-          * Mã nhân viên được sinh tự động. Mật khẩu mặc định cho mọi tài khoản mới là <strong>123456</strong>.
-        </p>
+      <ToastContainer position="top-right" autoClose={3000} />
+      
+      <div className="bds-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+        <h2>Danh sách Nhân viên</h2>
         
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Mã Nhân Viên (Tự động)</label>
-              <input type="text" value={maNVMoi} readOnly style={{ backgroundColor: '#2d2e42', cursor: 'not-allowed', color: '#f1c40f', fontWeight: 'bold' }} />
-            </div>
-
-            <div className="form-group">
-              <label>Họ và tên (*)</label>
-              <input type="text" {...register('hoTen')} placeholder="Nhập họ và tên" />
-              {errors.hoTen && <span style={{ color: '#e74c3c', fontSize: '12px' }}>{errors.hoTen.message}</span>}
-            </div>
-
-            <div className="form-group">
-              <label>Email (*)</label>
-              <input type="email" {...register('email')} placeholder="example@gmail.com" />
-              {errors.email && <span style={{ color: '#e74c3c', fontSize: '12px' }}>{errors.email.message}</span>}
-            </div>
-
-            <div className="form-group">
-              <label>Số điện thoại (*)</label>
-              <input type="text" {...register('soDienThoai')} placeholder="Nhập số điện thoại" />
-              {errors.soDienThoai && <span style={{ color: '#e74c3c', fontSize: '12px' }}>{errors.soDienThoai.message}</span>}
-            </div>
-
-            <div className="form-group">
-              <label>Chức vụ (*)</label>
-              <select {...register('chucVu')}>
-                <option value="">-- Chọn chức vụ --</option>
-                <option value="Nhân viên kinh doanh">Nhân viên kinh doanh</option>
-                <option value="Trưởng phòng">Trưởng phòng</option>
-                <option value="Kế toán">Kế toán</option>
-                <option value="Nhân sự">Nhân sự</option>
-                <option value="Giám đốc">Giám đốc</option>
-                <option value="Chuyên viên">Chuyên viên</option>
-                <option value="Nhân viên tư vấn">Nhân viên tư vấn</option>
-                <option value="Trưởng phòng kinh doanh">Trưởng phòng kinh doanh</option>
-              </select>
-              {errors.chucVu && <span style={{ color: '#e74c3c', fontSize: '12px' }}>{errors.chucVu.message}</span>}
-            </div>
-
-            <div className="form-group">
-              <label>Quyền hệ thống (*)</label>
-              <select {...register('Role')}>
-                <option value="employee">Nhân viên (Employee)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-actions mt-4">
-            <button type="button" className="btn-cancel" onClick={() => navigate('/admin/nhan-vien')}>Hủy bỏ</button>
-            <button type="submit" className="btn-submit">Lưu hệ thống</button>
-          </div>
-        </form>
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+          <input 
+            type="text" 
+            placeholder="Tìm theo Mã, Tên, SĐT..."
+            value={searchText}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+              setCurrentPage(1);
+            }}
+            style={{ 
+              padding: '10px 15px', 
+              borderRadius: '6px', 
+              border: '1px solid #4a4e69', 
+              backgroundColor: '#1a1a2e', 
+              color: '#fff', 
+              width: '280px',
+              outline: 'none'
+            }}
+          />
+          <button className="btn-add" onClick={() => navigate('/admin/nhan-vien/add')}>
+            + Thêm Nhân viên
+          </button>
+        </div>
       </div>
+
+      <div className="bds-table-wrapper">
+        <table className="bds-table">
+          <thead>
+            <tr>
+              <th>Mã NV</th>
+              <th>Họ tên</th>
+              <th>Email</th>
+              <th>Số điện thoại</th>
+              <th>Chức vụ</th>
+              <th>Phân quyền</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {currentItems.length > 0 ? (
+              currentItems.map((nv) => (
+                <tr key={nv.id}>
+                  <td>{nv.id}</td>
+                  <td style={{ fontWeight: 'bold' }}>{nv.hoTen}</td>
+                  <td>{nv.email}</td>
+                  <td>{nv.soDienThoai}</td>
+                  <td>{nv.chucVu}</td>
+                  <td>
+                    <span className={`status ${String(nv.Role || nv.role).toLowerCase() === 'admin' ? 'sold' : 'available'}`}>
+                      {String(nv.Role || nv.role).toLowerCase() === 'admin' ? 'Admin' : 'Nhân viên'}
+                    </span>
+                  </td>
+                  <td className="actions">
+                    <button className="btn-view" onClick={() => navigate(`/admin/nhan-vien/detail/${nv.id}`)}>Xem</button>
+                    <button className="btn-edit" onClick={() => navigate(`/admin/nhan-vien/edit/${nv.id}`)}>Sửa</button>
+                    <button className="btn-delete" onClick={() => handleDelete(nv.id)}>Xóa</button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '20px' }}>
+                  {searchText ? 'Không tìm thấy nhân viên nào phù hợp' : 'Không có dữ liệu nhân viên'}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="pagination" style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'flex-end' }}>
+          <button 
+            disabled={currentPage === 1} 
+            onClick={() => setCurrentPage(prev => prev - 1)}
+            style={{ padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            Trang trước
+          </button>
+          <span style={{ padding: '8px', color: '#D4AF37', fontWeight: 'bold' }}>Trang {currentPage} / {totalPages}</span>
+          <button 
+            disabled={currentPage === totalPages} 
+            onClick={() => setCurrentPage(prev => prev + 1)}
+            style={{ padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}
+          >
+            Trang sau
+          </button>
+        </div>
+      )}
     </div>
   );
-};
+}

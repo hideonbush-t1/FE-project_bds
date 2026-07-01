@@ -17,15 +17,17 @@ interface NhanVien {
 
 export function AdminNhanVienPage() {
   const [danhSachNV, setDanhSachNV] = useState<NhanVien[]>([]);
-  
-  // 💡 1. Thêm State để quản lý việc Tìm kiếm
   const [searchText, setSearchText] = useState(''); 
-  
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8; 
 
   const navigate = useNavigate();
   const token = localStorage.getItem('accessToken') || '';
+
+  // 💡 1. Lấy thông tin người đang đăng nhập từ LocalStorage
+  // (Đảm bảo key lưu user lúc đăng nhập của bạn là 'user', nếu là key khác thì sửa lại nhé)
+  const userRaw = localStorage.getItem('user');
+  const currentUser = userRaw ? JSON.parse(userRaw) : null;
 
   useEffect(() => {
     fetch('http://localhost:4000/nhan-vien', {
@@ -40,10 +42,18 @@ export function AdminNhanVienPage() {
           list = data.data; 
         }
 
-        // 💡 3. Lọc bỏ Admin: Không hiển thị những người có quyền Admin ra danh sách
-        list = list.filter(nv => {
-          const role = String(nv.Role || nv.role).toLowerCase();
-          return role !== 'admin' && role !== '1'; // Thay đổi điều kiện tùy theo data backend của bạn
+        // 💡 2. ĐÃ SỬA CỤM NÀY: CHỈ ẨN CHÍNH MÌNH, CÒN LẠI HIỂN THỊ TẤT CẢ (KỂ CẢ ADMIN KHÁC)
+        list = list.filter((nv) => {
+          const isMe = currentUser && (
+            nv.id === currentUser.id || 
+            nv.id === currentUser.maNV || 
+            (currentUser.email && nv.email === currentUser.email)
+          );
+          
+          if (isMe) {
+            return false; // Nếu là "Tôi" -> Bỏ qua không hiển thị
+          }
+          return true; // Nếu là người khác (Employee hay Admin) -> Cho hiển thị hết
         });
 
         // 💡 4. Sắp xếp Mới nhất lên đầu (Theo thứ tự Z -> A của Mã NV)
@@ -72,7 +82,6 @@ export function AdminNhanVienPage() {
             toast.success('Đã xóa nhân viên thành công!');
             setDanhSachNV((prev) => prev.filter((item) => item.id !== id && item.maNV !== id));
           } else {
-            // Hiển thị rõ lỗi từ Backend trả về để biết vì sao không xóa được
             const err = await response.json();
             toast.error(`Không thể xóa: ${err.message || 'Lỗi dữ liệu ràng buộc'}`);
           }
@@ -81,7 +90,6 @@ export function AdminNhanVienPage() {
     }
   };
 
-  // 💡 6. Lọc danh sách theo từ khóa tìm kiếm (Mã, Tên, SĐT) TRƯỚC KHI phân trang
   const filteredList = danhSachNV.filter((nv) => {
     if (!searchText) return true;
     const lowerSearch = searchText.toLowerCase();
@@ -101,7 +109,6 @@ export function AdminNhanVienPage() {
     <div className="bds-container">
       <ToastContainer position="top-right" autoClose={3000} />
       
-      {/* 💡 7. Giao diện Header có thêm Ô Tìm Kiếm */}
       <div className="bds-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <h2>Danh sách Nhân viên</h2>
         
@@ -112,7 +119,7 @@ export function AdminNhanVienPage() {
             value={searchText}
             onChange={(e) => {
               setSearchText(e.target.value);
-              setCurrentPage(1); // Tự động quay về trang 1 khi gõ tìm kiếm
+              setCurrentPage(1); 
             }}
             style={{ 
               padding: '10px 15px', 
