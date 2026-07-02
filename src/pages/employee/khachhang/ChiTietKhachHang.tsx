@@ -3,29 +3,35 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { http } from '../../../api/http';
 
 export default function ChiTietKhachHang() {
-  const { id } = useParams(); 
+  const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [khachHang, setKhachHang] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Logic kiểm tra URL để quay lại đúng trang Admin hoặc Employee
   const isRouteAdmin = location.pathname.includes('/admin');
-  const backUrl = isRouteAdmin ? '/admin/khach-hang' : '/employee/khach-hang';
+  const pathPrefix = isRouteAdmin ? '/admin' : '/employee';
+  const backUrl = `${pathPrefix}/khach-hang`;
+
+  // Cấu hình Style đồng bộ với thiết kế Dark Dashboard
+  const styles = {
+    container: { padding: '40px 20px', backgroundColor: '#13141f', minHeight: '100vh', display: 'flex', justifyContent: 'center' },
+    card: { backgroundColor: '#1e1f2f', border: '1px solid #2d2e42', padding: '30px', borderRadius: '8px', color: '#fff', width: '100%', maxWidth: '600px' },
+    textYellow: { color: '#f8cc46', borderBottom: '1px solid #2d2e42', paddingBottom: '15px', textAlign: 'center' as const, marginBottom: '25px' },
+    label: { width: '160px', color: '#f8cc46', fontWeight: 'bold' },
+    value: { color: '#c4c4d4', wordBreak: 'break-word' as const },
+    row: { display: 'flex', borderBottom: '1px solid #2d2e42', padding: '12px 0' },
+    btnBase: { padding: '12px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' as const, border: 'none', textAlign: 'center' as const }
+  };
 
   useEffect(() => {
     const fetchChiTiet = async () => {
-      if (!id) {
-        setError('ID hồ sơ không hợp lệ.');
-        setLoading(false);
-        return;
-      }
       try {
         const res = await http.get(`/khach-hang/${id}`);
         setKhachHang(res.data);
-      } catch (error: any) {
+      } catch (error) {
         setError('Không thể tải chi tiết hồ sơ.');
       } finally {
         setLoading(false);
@@ -37,57 +43,46 @@ export default function ChiTietKhachHang() {
   if (loading) return <div style={{ padding: '40px', color: '#fff', textAlign: 'center' }}>⏳ Đang tải...</div>;
   if (error) return <div style={{ padding: '40px', color: '#e74c3c', textAlign: 'center' }}>❌ {error}</div>;
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Chưa cập nhật';
-    return new Date(dateString).toLocaleDateString('vi-VN');
-  };
-
   return (
-    <div style={{ padding: '40px 20px', backgroundColor: '#1a1c23', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: '600px', backgroundColor: '#252830', padding: '30px', borderRadius: '8px', border: '1px solid #3d4149', color: '#fff' }}>
-        <h2 style={{ color: '#f1c40f', borderBottom: '2px solid #333', paddingBottom: '10px', textAlign: 'center', marginBottom: '25px' }}>
-          🔍 CHI TIẾT KHÁCH HÀNG
-        </h2>
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h2 style={styles.textYellow}>🔍 CHI TIẾT KHÁCH HÀNG</h2>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           {[
-            { label: 'Mã Khách Hàng', value: khachHang.id },
+            { label: 'Mã KH', value: khachHang.id },
             { label: 'Họ và tên', value: khachHang.hoTen },
-            { label: 'Ngày sinh', value: formatDate(khachHang.ngaySinh) },
+            { label: 'Ngày sinh', value: khachHang.ngaySinh ? new Date(khachHang.ngaySinh).toLocaleDateString('vi-VN') : '—' },
             { label: 'Giới tính', value: khachHang.gioiTinh },
-            { label: 'Nhu cầu', value: khachHang.loaiKH },
+            { label: 'Nhu cầu/Loại', value: khachHang.loaiKH },
             { label: 'Số điện thoại', value: khachHang.soDienThoai },
-            { label: 'Email', value: khachHang.email || 'Chưa cập nhật' },
-            { label: 'Số CMND/CCCD', value: khachHang.soCMND || 'Trống' },
-            { label: 'Địa chỉ', value: khachHang.diaChi || 'Chưa cập nhật' },
-            { label: 'Mã NV quản lý', value: khachHang.nhanVienId || 'Chưa phân công' },
+            { label: 'Email', value: khachHang.email || '—' },
+            { label: 'CCCD/CMND', value: khachHang.soCMND || '—' },
+            { label: 'Địa chỉ', value: khachHang.diaChi || '—' },
+            { label: 'NV Quản lý', value: khachHang.nhanVienId || 'Chưa phân công' },
           ].map((item, index) => (
-            <div key={index} style={{ display: 'flex', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
-              <strong style={{ width: '160px', color: '#bdc3c7' }}>{item.label}:</strong>
-              <span style={{ color: '#fff', wordBreak: 'break-word' }}>{item.value}</span>
+            <div key={index} style={styles.row}>
+              <strong style={styles.label}>{item.label}:</strong>
+              <span style={styles.value}>{item.value}</span>
             </div>
           ))}
         </div>
 
-        <button 
-          onClick={() => navigate(backUrl)} 
-          style={{ 
-            marginTop: '30px', 
-            width: '100%', 
-            padding: '12px', 
-            backgroundColor: '#333', 
-            color: '#fff', 
-            border: 'none', 
-            borderRadius: '4px', 
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            transition: '0.3s'
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#444')}
-          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#333')}
-        >
-          ⬅ QUAY LẠI DANH SÁCH
-        </button>
+        {/* Nút thao tác tối ưu (xếp chồng trên Mobile) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '30px' }}>
+          <button 
+            onClick={() => navigate(`${pathPrefix}/khach-hang/edit/${id}`)}
+            style={{ ...styles.btnBase, backgroundColor: '#f8cc46', color: '#000' }}
+          >
+            ✏️ CHỈNH SỬA THÔNG TIN
+          </button>
+          <button 
+            onClick={() => navigate(backUrl)} 
+            style={{ ...styles.btnBase, backgroundColor: '#2d2e42', color: '#fff' }}
+          >
+            ⬅ QUAY LẠI DANH SÁCH
+          </button>
+        </div>
       </div>
     </div>
   );

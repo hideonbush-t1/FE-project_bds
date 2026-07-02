@@ -8,12 +8,11 @@ export default function SuaKhachHang() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Tự động nhận diện quyền qua URL để điều hướng quay lại
   const isRouteAdmin = location.pathname.includes('/admin');
   const backUrl = isRouteAdmin ? '/admin/khach-hang' : '/employee/khach-hang';
 
   const [formData, setFormData] = useState({
-    maKH: 'Đang tải...',
+    maKH: '',
     loaiKH: 'Cá nhân',
     hoTen: '',
     gioiTinh: 'Nam',
@@ -25,15 +24,24 @@ export default function SuaKhachHang() {
     soCMND: ''
   });
 
-  // Styles tái sử dụng
-  const labelStyle = { fontWeight: 'bold', color: '#fff', marginBottom: '8px', display: 'block' };
+  // Cấu hình Style đồng bộ với hệ thống
+  const theme = {
+    background: '#1e1f2f',
+    container: '#13141f',
+    border: '#2d2e42',
+    text: '#c4c4d4',
+    accent: '#f8cc46',
+    danger: '#dc3545'
+  };
+
+  const labelStyle = { fontWeight: 'bold', color: theme.accent, marginBottom: '8px', display: 'block' };
   const inputStyle = { 
     width: '100%', 
     padding: '12px', 
-    border: '1px solid #3d4149', 
-    borderRadius: '4px', 
+    border: `1px solid ${theme.border}`, 
+    borderRadius: '6px', 
     color: '#fff', 
-    backgroundColor: '#252830', 
+    backgroundColor: theme.container, 
     boxSizing: 'border-box' as const 
   };
 
@@ -42,7 +50,6 @@ export default function SuaKhachHang() {
       try {
         const res = await http.get(`/khach-hang/${id}`);
         const kh = res.data;
-        
         if (kh) {
           setFormData({
             maKH: kh.id || '',
@@ -61,7 +68,6 @@ export default function SuaKhachHang() {
         toast.error("Không tìm thấy thông tin khách hàng!");
       }
     };
-
     if (id) fetchKhachHang();
   }, [id]);
 
@@ -72,7 +78,6 @@ export default function SuaKhachHang() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     try {
-      // Bỏ mã KH ra để không can thiệp vào khoá chính trong Database
       const { maKH, ...updateData } = formData;
       const payload = {
         ...updateData,
@@ -83,17 +88,17 @@ export default function SuaKhachHang() {
       toast.success('Cập nhật thành công!');
       setTimeout(() => navigate(backUrl), 1000);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật!';
-      toast.error(errorMessage);
+      const errMsg = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật!';
+      toast.error(Array.isArray(errMsg) ? errMsg[0] : errMsg);
     }
   };
 
   return (
-    <div style={{ padding: '40px 20px', backgroundColor: '#1a1c23', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
-      <Toaster position="top-right" toastOptions={{ style: { background: '#252830', color: '#fff' } }} />
+    <div style={{ padding: '40px 20px', backgroundColor: theme.container, minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
+      <Toaster position="top-right" toastOptions={{ style: { background: theme.background, color: '#fff' } }} />
       
-      <div style={{ width: '100%', maxWidth: '700px', backgroundColor: '#1a1c23', border: '1px solid #333', padding: '30px', borderRadius: '8px' }}>
-        <h2 style={{ color: '#f1c40f', borderBottom: '2px solid #333', paddingBottom: '10px', textAlign: 'center', marginBottom: '30px' }}>
+      <div style={{ width: '100%', maxWidth: '700px', backgroundColor: theme.background, border: `1px solid ${theme.border}`, padding: '30px', borderRadius: '8px' }}>
+        <h2 style={{ color: theme.accent, borderBottom: `2px solid ${theme.border}`, paddingBottom: '10px', textAlign: 'center', marginBottom: '30px' }}>
           ✏️ CẬP NHẬT THÔNG TIN KHÁCH HÀNG
         </h2>
         
@@ -119,11 +124,11 @@ export default function SuaKhachHang() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
             <div>
-                <label style={labelStyle}>Loại KH:</label>
-                <select name="loaiKH" value={formData.loaiKH} onChange={handleChange} style={inputStyle}>
-                    <option value="Cá nhân">Cá nhân</option>
-                    <option value="Doanh nghiệp">Doanh nghiệp</option>
-                </select>
+              <label style={labelStyle}>Loại KH:</label>
+              <select name="loaiKH" value={formData.loaiKH} onChange={handleChange} style={inputStyle}>
+                <option value="Cá nhân">Cá nhân</option>
+                <option value="Doanh nghiệp">Doanh nghiệp</option>
+              </select>
             </div>
             <div>
               <label style={labelStyle}>Giới Tính:</label>
@@ -135,9 +140,14 @@ export default function SuaKhachHang() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-            <button type="submit" style={{ flex: 2, padding: '15px', backgroundColor: '#f1c40f', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>LƯU THÔNG TIN</button>
-            <button type="button" onClick={() => navigate(backUrl)} style={{ flex: 1, padding: '15px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>HỦY</button>
+          {/* Nút thao tác tối ưu cho Mobile (Xếp chồng) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+            <button type="submit" style={{ width: '100%', padding: '15px', backgroundColor: theme.accent, color: '#000', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+              LƯU THÔNG TIN
+            </button>
+            <button type="button" onClick={() => navigate(backUrl)} style={{ width: '100%', padding: '15px', backgroundColor: theme.danger, color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+              HỦY BỎ
+            </button>
           </div>
         </form>
       </div>

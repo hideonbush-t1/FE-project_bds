@@ -7,12 +7,7 @@ export default function ThemKhachHang() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // State quản lý danh sách check trùng lặp
-  const [existingCCCD, setExistingCCCD] = useState<string[]>([]);
-  const [existingEmails, setExistingEmails] = useState<string[]>([]);
-
   const [formData, setFormData] = useState({
-    maKH: 'Đang tải...',
     loaiKH: 'Cá nhân',
     hoTen: '',
     gioiTinh: 'Nam',
@@ -24,11 +19,9 @@ export default function ThemKhachHang() {
     soCMND: ''
   });
 
-  // Tự động xác định đường dẫn quay lại dựa trên URL hiện tại (Admin hay Employee)
   const isRouteAdmin = location.pathname.includes('/admin');
   const backUrl = isRouteAdmin ? '/admin/khach-hang' : '/employee/khach-hang';
 
-  // Styles tái sử dụng
   const labelStyle = { fontWeight: 'bold', color: '#fff', marginBottom: '8px', display: 'block' };
   const inputStyle = { 
     width: '100%', 
@@ -41,33 +34,9 @@ export default function ThemKhachHang() {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const userRaw = localStorage.getItem('user');
-        const user = userRaw ? JSON.parse(userRaw) : null;
-
-        const res = await http.get('/khach-hang');
-        const list = res.data;
-        
-        // Tạo mã khách hàng tự động
-        const maxCode = list.reduce((max: number, kh: any) => {
-           const idNum = parseInt(kh.id?.replace('KH', '') || 0);
-           return Math.max(max, idNum);
-        }, 0);
-        
-        setExistingCCCD(list.map((kh: any) => kh.soCMND).filter(Boolean));
-        setExistingEmails(list.map((kh: any) => kh.email).filter(Boolean));
-
-        setFormData(prev => ({
-          ...prev,
-          maKH: `KH${(maxCode + 1).toString().padStart(3, '0')}`,
-          nhanVienId: user?.maNV || 'NV_CHUA_XAC_DINH'
-        }));
-      } catch (err) { 
-        toast.error("Không thể tải dữ liệu hệ thống!"); 
-      }
-    };
-    fetchData();
+    const userRaw = localStorage.getItem('user');
+    const user = userRaw ? JSON.parse(userRaw) : null;
+    setFormData(prev => ({ ...prev, nhanVienId: user?.maNV || 'NV_CHUA_XAC_DINH' }));
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -77,18 +46,7 @@ export default function ThemKhachHang() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Kiểm tra trùng lặp dữ liệu trước khi gửi
-    if (existingCCCD.includes(formData.soCMND.trim())) {
-      toast.error("Số CMND/CCCD này đã tồn tại trong hệ thống!");
-      return;
-    }
-
-    if (formData.email.trim() !== "" && existingEmails.includes(formData.email.trim())) {
-      toast.error("Email này đã được sử dụng!");
-      return;
-    }
-
-    // Chuẩn hóa dữ liệu gửi đi
+    // Đảm bảo dữ liệu gửi đi sạch sẽ
     const payload = {
       ...formData,
       ngaySinh: formData.ngaySinh ? new Date(formData.ngaySinh).toISOString() : new Date().toISOString()
@@ -97,14 +55,18 @@ export default function ThemKhachHang() {
     try {
       await http.post('/khach-hang', payload);
       toast.success('Thêm khách hàng thành công!');
-      setTimeout(() => navigate(backUrl), 1500); 
+      setTimeout(() => navigate(backUrl), 1000); 
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi lưu dữ liệu!');
+      // Bắt lỗi từ Backend: ConflictException sẽ rơi vào đây
+      const errMsg = error.response?.data?.message || 'Có lỗi xảy ra khi lưu dữ liệu!';
+      // Nếu Backend trả về mảng lỗi (Validation pipe), lấy lỗi đầu tiên
+      const finalMsg = Array.isArray(errMsg) ? errMsg[0] : errMsg;
+      toast.error(finalMsg);
     }
   };
 
   return (
-    <div style={{ padding: '40px 20px', backgroundColor: '#1a1c23', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
+    <div style={{ padding: '40px 20px', backgroundColor: '#1a1c23', minHeight: '100vh', display: 'flex', justifyContent: 'center', boxSizing: 'border-box' }}>
       <Toaster position="top-right" toastOptions={{ style: { background: '#252830', color: '#fff' } }} />
       
       <div style={{ width: '100%', maxWidth: '700px', backgroundColor: '#1a1c23', border: '1px solid #333', padding: '30px', borderRadius: '8px' }}>
@@ -113,10 +75,9 @@ export default function ThemKhachHang() {
         </h2>
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Thông tin cố định */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            <div><label style={labelStyle}>Mã KH:</label><input value={formData.maKH} readOnly style={{...inputStyle, opacity: 0.6}} /></div>
-            <div><label style={labelStyle}>Mã NV:</label><input value={formData.nhanVienId} readOnly style={{...inputStyle, opacity: 0.6}} /></div>
+          <div>
+            <label style={labelStyle}>Mã NV thực hiện:</label>
+            <input value={formData.nhanVienId} readOnly style={{...inputStyle, opacity: 0.6, cursor: 'not-allowed'}} />
           </div>
 
           <div><label style={labelStyle}>Họ Tên (*):</label><input name="hoTen" required value={formData.hoTen} onChange={handleChange} style={inputStyle} /></div>
@@ -150,7 +111,6 @@ export default function ThemKhachHang() {
             </div>
           </div>
 
-          {/* Buttons */}
           <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
             <button type="submit" style={{ flex: 2, padding: '15px', backgroundColor: '#f1c40f', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>LƯU THÔNG TIN</button>
             <button type="button" onClick={() => navigate(backUrl)} style={{ flex: 1, padding: '15px', backgroundColor: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>HỦY</button>
