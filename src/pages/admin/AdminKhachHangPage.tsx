@@ -33,7 +33,9 @@ export default function AdminKhachHangPage() {
       const res = await http.get(`/khach-hang?search=${searchKey}&loaiKH=${loaiKH}`);
       setKhachHangList(res.data);
       setCurrentPage(1);
-    } catch (error) { toast.error("Không thể tải danh sách khách hàng!"); }
+    } catch (error) { 
+      toast.error("Không thể tải danh sách khách hàng!"); 
+    }
   };
 
   useEffect(() => {
@@ -47,8 +49,17 @@ export default function AdminKhachHangPage() {
       await http.delete(`/khach-hang/${deleteModal.id}`);
       toast.success("Xóa khách hàng thành công!");
       fetchKhachHang();
-    } catch (error: any) { toast.error("Lỗi khi xóa khách hàng!"); }
-    finally { setDeleteModal({ isOpen: false, id: null }); }
+    } catch (error: any) {
+      // Kiểm tra phản hồi từ backend xem có phải lỗi xung đột dữ liệu không
+      if (error.response && error.response.status === 409) {
+        toast.error("Không thể xóa: Khách hàng này đang sở hữu bất động sản!");
+      } else {
+        toast.error("Lỗi khi xóa khách hàng!");
+      }
+    }
+    finally {
+      setDeleteModal({ isOpen: false, id: null });
+    }
   };
 
   const totalPages = Math.max(1, Math.ceil(khachHangList.length / itemsPerPage));
