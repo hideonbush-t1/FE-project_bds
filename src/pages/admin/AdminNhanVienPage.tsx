@@ -21,11 +21,14 @@ export function AdminNhanVienPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8; 
 
+  // 💡 1. THÊM STATE ĐỂ QUẢN LÝ POPUP XÓA
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [idToDelete, setIdToDelete] = useState<string | null>(null);
+
   const navigate = useNavigate();
   const token = localStorage.getItem('accessToken') || '';
 
-  // 💡 1. Lấy thông tin người đang đăng nhập từ LocalStorage
-  // (Đảm bảo key lưu user lúc đăng nhập của bạn là 'user', nếu là key khác thì sửa lại nhé)
+  // Lấy thông tin người đang đăng nhập từ LocalStorage
   const userRaw = localStorage.getItem('user');
   const currentUser = userRaw ? JSON.parse(userRaw) : null;
 
@@ -42,7 +45,7 @@ export function AdminNhanVienPage() {
           list = data.data; 
         }
 
-        // 💡 2. ĐÃ SỬA CỤM NÀY: CHỈ ẨN CHÍNH MÌNH, CÒN LẠI HIỂN THỊ TẤT CẢ (KỂ CẢ ADMIN KHÁC)
+        // LỌC: CHỈ ẨN CHÍNH MÌNH, HIỂN THỊ CẢ ADMIN KHÁC
         list = list.filter((nv) => {
           const isMe = currentUser && (
             nv.id === currentUser.id || 
@@ -56,7 +59,7 @@ export function AdminNhanVienPage() {
           return true; // Nếu là người khác (Employee hay Admin) -> Cho hiển thị hết
         });
 
-        // 💡 4. Sắp xếp Mới nhất lên đầu (Theo thứ tự Z -> A của Mã NV)
+        // Sắp xếp Mới nhất lên đầu (Theo thứ tự Z -> A của Mã NV)
         list.sort((a: NhanVien, b: NhanVien) => {
           const idA = a.id || a.maNV || '';
           const idB = b.id || b.maNV || '';
@@ -71,23 +74,35 @@ export function AdminNhanVienPage() {
       });
   }, [token]);
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa nhân viên này?')) {
-      fetch(`http://localhost:4000/nhan-vien/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+  // 💡 2. HÀM GỌI POPUP KHI BẤM NÚT XÓA (Thay thế window.confirm)
+  const handleDeleteClick = (id: string) => {
+    setIdToDelete(id);
+    setShowDeleteModal(true); // Hiển thị Modal
+  };
+
+  // 💡 3. HÀM THỰC THI XÓA CHÍNH THỨC KHI BẤM "ĐỒNG Ý"
+  const confirmDelete = () => {
+    if (!idToDelete) return;
+
+    fetch(`http://localhost:4000/nhan-vien/${idToDelete}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(async (response) => {
+        if (response.ok) {
+          toast.success('Đã xóa nhân viên thành công!');
+          setDanhSachNV((prev) => prev.filter((item) => item.id !== idToDelete && item.maNV !== idToDelete));
+        } else {
+          const err = await response.json();
+          toast.error(`Không thể xóa: ${err.message || 'Lỗi dữ liệu ràng buộc'}`);
+        }
       })
-        .then(async (response) => {
-          if (response.ok) {
-            toast.success('Đã xóa nhân viên thành công!');
-            setDanhSachNV((prev) => prev.filter((item) => item.id !== id && item.maNV !== id));
-          } else {
-            const err = await response.json();
-            toast.error(`Không thể xóa: ${err.message || 'Lỗi dữ liệu ràng buộc'}`);
-          }
-        })
-        .catch(() => toast.error('Lỗi kết nối mạng!'));
-    }
+      .catch(() => toast.error('Lỗi kết nối mạng!'))
+      .finally(() => {
+        // Dù thành công hay lỗi cũng phải đóng popup và dọn ID
+        setShowDeleteModal(false);
+        setIdToDelete(null);
+      });
   };
 
   const filteredList = danhSachNV.filter((nv) => {
@@ -167,7 +182,8 @@ export function AdminNhanVienPage() {
                   <td className="actions">
                     <button className="btn-view" onClick={() => navigate(`/admin/nhan-vien/detail/${nv.id}`)}>Xem</button>
                     <button className="btn-edit" onClick={() => navigate(`/admin/nhan-vien/edit/${nv.id}`)}>Sửa</button>
-                    <button className="btn-delete" onClick={() => handleDelete(nv.id)}>Xóa</button>
+                    {/* 💡 4. Đổi sự kiện onClick ở đây */}
+                    <button className="btn-delete" onClick={() => handleDeleteClick(nv.id)}>Xóa</button>
                   </td>
                 </tr>
               ))
@@ -199,6 +215,49 @@ export function AdminNhanVienPage() {
           >
             Trang sau
           </button>
+        </div>
+      )}
+
+      {/* 💡 5. UI CỦA POPUP MODAL XÁC NHẬN XÓA */}
+      {showDeleteModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: '#1a1a2e',
+            padding: '30px',
+            borderRadius: '12px',
+            border: '1px solid #e74c3c',
+            width: '400px',
+            textAlign: 'center',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
+          }}>
+            <h3 style={{ color: '#e74c3c', marginTop: 0, marginBottom: '15px' }}>⚠️ Xác nhận xóa</h3>
+            <p style={{ color: '#ecf0f1', marginBottom: '25px', lineHeight: '1.5' }}>
+              Bạn có chắc chắn muốn xóa nhân viên <strong>{idToDelete}</strong> không?<br/>
+              Hành động này không thể hoàn tác!
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+              <button 
+                onClick={() => { setShowDeleteModal(false); setIdToDelete(null); }}
+                style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', backgroundColor: '#95a5a6', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                onClick={confirmDelete}
+                style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', backgroundColor: '#e74c3c', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Đồng ý xóa
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
