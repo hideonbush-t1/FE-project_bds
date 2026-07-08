@@ -11,20 +11,21 @@ export function ProtectedRoute({
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="app-shell p-4">Đang tải...</div>;
+    return <div className="app-shell p-4">Đang tải dữ liệu...</div>;
   }
 
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
-  // Nếu route yêu cầu quyền 'admin' nhưng user không phải 'admin' -> Đẩy về trang nhân viên
-  if (role === 'admin' && user.role !== 'admin') {
+  // 💡 Xử lý triệt để vụ Role viết hoa hay viết thường từ Backend trả về
+  const isUserAdmin = String(user.Role || user.role).toLowerCase() === 'admin';
+
+  if (role === 'admin' && !isUserAdmin) {
     return <Navigate to="/employee/dashboard" replace />;
   }
 
-  // Nếu route yêu cầu quyền 'employee' nhưng user lại là 'admin' -> Đẩy về trang quản trị
-  if (role === 'employee' && user.role === 'admin') {
+  if (role === 'employee' && isUserAdmin) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 

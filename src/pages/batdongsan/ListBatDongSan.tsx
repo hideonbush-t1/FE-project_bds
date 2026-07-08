@@ -22,6 +22,12 @@ const ListBatDongSan = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('accessToken') || '';
 
+  // 💡 1. LẤY QUYỀN USER ĐỂ ẨN NÚT & ĐIỀU HƯỚNG ĐỘNG
+  const userRaw = localStorage.getItem('user');
+  const currentUser = userRaw ? JSON.parse(userRaw) : null;
+  const isAdmin = currentUser && String(currentUser.Role || currentUser.role).toLowerCase() === 'admin';
+  const basePath = isAdmin ? '/admin' : '/employee'; // Điều hướng đúng luồng
+
   const fetchBDS = useCallback(() => {
     const hasFilters = filters.loaiBDS || filters.viTri || filters.diaChi || filters.giaMin || filters.giaMax || filters.huong;
     
@@ -149,7 +155,8 @@ const ListBatDongSan = () => {
       
       <div className="bds-header">
         <h2>Danh sách Bất động sản</h2>
-        <button className="btn-add" onClick={() => navigate('/admin/bat-dong-san/add')}>
+        {/* 💡 2. Thay thế cứng /admin bằng basePath */}
+        <button className="btn-add" onClick={() => navigate(`${basePath}/bat-dong-san/add`)}>
           + Thêm Bất động sản
         </button>
       </div>
@@ -178,9 +185,14 @@ const ListBatDongSan = () => {
           <input type="text" name="viTri" value={localFilters.viTri} onChange={handleFilterChange} placeholder="Mặt tiền, ngõ..." />
         </div>
 
-        <div className="filter-group">
-          <label>Mức giá</label>
-          <select name="mucGia" value={getSelectedPrice(localFilters.giaMin, localFilters.giaMax)} onChange={handleFilterChange}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 2, minWidth: '180px' }}>
+          <label style={{ fontSize: '13px', color: '#bdc3c7', marginBottom: '6px', fontWeight: '500' }}>Mức giá</label>
+          <select 
+            name="mucGia" 
+            value={getSelectedPrice(localFilters.giaMin, localFilters.giaMax)} 
+            onChange={handleFilterChange} 
+            style={{ padding: '10px', borderRadius: '6px', backgroundColor: '#2d3436', color: 'white', border: '1px solid #4a5459', outline: 'none' }}
+          >
             <option value="">-- Tất cả mức giá --</option>
             <option value="duoi-500tr">Dưới 500 triệu</option>
             <option value="500tr-1ty">500 triệu - 1 tỷ</option>
@@ -247,9 +259,14 @@ const ListBatDongSan = () => {
                     </span>
                   </td>
                   <td className="actions">
-                    <button className="btn-view" onClick={() => navigate(`/admin/bat-dong-san/detail/${bds.id}`)}>Xem</button>
-                    <button className="btn-edit" onClick={() => navigate(`/admin/bat-dong-san/edit/${bds.id}`)}>Sửa</button>
-                    <button className="btn-delete" onClick={() => handleDelete(bds.id)}>Xóa</button>
+                    {/* 💡 3. Sửa đường dẫn Xem & Sửa thành động theo basePath */}
+                    <button className="btn-view" onClick={() => navigate(`${basePath}/bat-dong-san/detail/${bds.id}`)}>Xem</button>
+                    <button className="btn-edit" onClick={() => navigate(`${basePath}/bat-dong-san/edit/${bds.id}`)}>Sửa</button>
+                    
+                    {/* 💡 4. ĐIỀU KIỆN ẨN: Nút Xóa chỉ hiện khi isAdmin = true */}
+                    {isAdmin && (
+                      <button className="btn-delete" onClick={() => handleDelete(bds.id)}>Xóa</button>
+                    )}
                   </td>
                 </tr>
               ))

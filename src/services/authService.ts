@@ -1,15 +1,15 @@
 import { http } from '../api/http';
 
 export type LoginResponse = {
-  accessToken: string;
+  access_token: string; // Khớp với Backend
   user: {
-    id: number;
+    id: string;
     maNV: string;
     hoTen: string;
     email: string;
     soDienThoai?: string | null;
     chucVu: string;
-    isAdmin: boolean;
+    role: string;
   };
 };
 

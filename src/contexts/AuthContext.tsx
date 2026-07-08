@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { toast } from 'react-toastify';
 
-// Cập nhật lại Type cho khớp 100% với dữ liệu Backend trả về
 type User = {
   id: string;
   maNV: string;
@@ -10,7 +10,8 @@ type User = {
   email: string;
   soDienThoai?: string | null;
   chucVu: string;
-  role: string; // Đã sửa từ isAdmin thành role
+  role: string;
+  Role?: string; 
 };
 
 type AuthContextValue = {
@@ -25,7 +26,10 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,55 +41,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     authService
       .profile()
-      .then((response) => setUser(response.data))
-      .catch(() => {
-        localStorage.removeItem('accessToken');
-        setUser(null);
+      .then((response) => {
+        const userData = response.data?.user || response.data?.data || response.data;
+        setUser(userData as User);
+        localStorage.setItem('user', JSON.stringify(userData));
       })
+      .catch(() => logout())
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (maNV: string, matKhau: string) => {
-    // 1. Gọi API
     const response = await authService.login(maNV, matKhau);
     
-    // 2. Ép kiểu dữ liệu sang any để TypeScript ngừng gạch đỏ
-    const data: any = response.data; 
+    // Lưu token chuẩn từ backend
+    localStorage.setItem('accessToken', response.data.access_token);
     
-    // 3. Lấy đúng tên biến access_token (có dấu gạch dưới) từ Backend
-    localStorage.setItem('accessToken', data.access_token);
+    const userData = response.data.user as User;
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
     
-    // 4. Cập nhật state User
-    setUser(data.user);
+    // Cleanup UI
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = 'auto';
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+
+    toast.success('Đăng nhập thành công!');
+
+    const role = String(userData?.Role || userData?.role || '').toLowerCase();
     
-    // 5. Điều hướng chuẩn xác dựa trên trường 'role'
-    if (data.user?.role === 'admin') {
-      navigate('/admin/dashboard');
-    } else {
-      navigate('/employee/dashboard');
-    }
+    // 💡 SỬA Ở ĐÂY: Dùng setTimeout và window.location.href để ép tải lại trang
+    setTimeout(() => {
+      if (role === 'admin' || role === '1') {
+        window.location.href = '/admin/dashboard'; 
+      } else {
+        window.location.href = '/employee/dashboard';
+      }
+    }, 1000);
   };
 
   const logout = () => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
     setUser(null);
-    navigate('/');
+    toast.success('Đăng xuất thành công!');
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 800);
   };
 
   const refreshProfile = async () => {
-    const response = await authService.profile();
-    setUser(response.data);
+    try {
+      const response = await authService.profile();
+      const userData = response.data?.user || response.data?.data || response.data;
+      setUser(userData as User);
+      localStorage.setItem('user', JSON.stringify(userData));
+    } catch (error) {
+      logout();
+    }
   };
 
   const value = useMemo(() => ({ user, loading, login, logout, refreshProfile }), [user, loading]);
-
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-}
+export const useAuth = () => useContext(AuthContext)!;
