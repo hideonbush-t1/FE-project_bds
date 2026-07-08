@@ -11,15 +11,15 @@ export function ProtectedRoute({
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="app-shell p-4">Đang tải...</div>;
+    return <div className="app-shell p-4">Đang tải dữ liệu...</div>;
   }
 
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
-  // Đã cập nhật: Chỉ cần check 'admin' vì Database đã đồng bộ hoàn toàn
-  const isUserAdmin = String(user.role).toLowerCase() === 'admin';
+  // 💡 Xử lý triệt để vụ Role viết hoa hay viết thường từ Backend trả về
+  const isUserAdmin = String(user.Role || user.role).toLowerCase() === 'admin';
 
   if (role === 'admin' && !isUserAdmin) {
     return <Navigate to="/employee/dashboard" replace />;
