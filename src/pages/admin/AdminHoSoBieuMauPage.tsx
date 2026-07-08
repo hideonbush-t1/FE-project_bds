@@ -132,8 +132,6 @@ export function AdminHoSoBieuMauPage() {
     submitData.append('tenHoSo', formData.tenHoSo);
     submitData.append('noiDung', formData.noiDung);
     if (formData.file) submitData.append('file', formData.file);
-    // Nếu muốn báo Backend xóa file cũ khi cả formData.file và existingDuongDan đều null, bạn có thể gửi thêm field:
-    // submitData.append('isRemoveOldFile', (!formData.file && !formData.existingDuongDan) ? 'true' : 'false');
 
     const toastId = toast.loading(formData.file ? 'Đang cập nhật và tải file mới...' : 'Đang cập nhật...');
     try {
@@ -200,7 +198,7 @@ export function AdminHoSoBieuMauPage() {
     <div style={styles.container}>
       <Toaster position="top-right" reverseOrder={false} />
 
-      {/* Màn hình Danh sách & Chi tiết giữ nguyên như bản cũ... */}
+      {/* MÀN HÌNH DANH SÁCH */}
       {!isCreating && !viewingForm && !editingForm && (
         <>
           <div className="d-flex justify-content-between align-items-center mb-4">
@@ -210,7 +208,6 @@ export function AdminHoSoBieuMauPage() {
             </button>
           </div>
           <div className="card" style={styles.card}>
-            {/* Nội dung bảng (giữ nguyên code cũ của bạn) */}
             <div className="card-body">
               <div className="table-responsive">
                 <table className="table table-dark table-borderless align-middle mb-0" style={{ backgroundColor: 'transparent' }}>
@@ -248,7 +245,7 @@ export function AdminHoSoBieuMauPage() {
         </>
       )}
 
-      {/* Màn hình Thêm / Sửa */}
+      {/* MÀN HÌNH THÊM / SỬA */}
       {(isCreating || editingForm) && (
         <div className="card p-4" style={styles.card}>
           <h4 className="mb-4" style={{ color: '#f8cc46' }}>
@@ -264,13 +261,11 @@ export function AdminHoSoBieuMauPage() {
               <textarea className="form-control" rows={4} style={styles.inputDark} value={formData.noiDung} onChange={e => setFormData({...formData, noiDung: e.target.value})} />
             </div>
             
-            {/* KHU VỰC CHỌN VÀ PREVIEW FILE */}
             <div className="mb-4">
               <label className="form-label text-light">
                 Tệp tin đính kèm
               </label>
               
-              {/* Nếu chưa có file nào thì hiện Input, nếu có rồi thì ẩn Input đi và hiện Preview */}
               {(!formData.file && !formData.existingDuongDan) && (
                  <input 
                    type="file" 
@@ -282,9 +277,7 @@ export function AdminHoSoBieuMauPage() {
                  />
               )}
 
-              {/* Hiển thị Preview */}
               {renderFilePreview()}
-
             </div>
 
             <div className="mt-4">
@@ -294,6 +287,62 @@ export function AdminHoSoBieuMauPage() {
           </form>
         </div>
       )}
+
+      {/* MÀN HÌNH XEM CHI TIẾT (CÁCH 1) */}
+      {viewingForm && (
+        <div className="card p-4" style={styles.card}>
+          <h4 className="mb-4" style={{ color: '#f8cc46' }}>
+            Chi Tiết Biểu Mẫu
+          </h4>
+          
+          <div className="mb-3">
+            <label className="form-label text-light fw-bold" style={{ color: '#8b8c9e' }}>Tên hồ sơ:</label>
+            <p className="text-white fs-5">{viewingForm.TenHoSo}</p>
+          </div>
+          
+          <div className="mb-3">
+            <label className="form-label text-light fw-bold" style={{ color: '#8b8c9e' }}>Nội dung / Mô tả:</label>
+            <div 
+              className="text-white p-3 rounded" 
+              style={{ 
+                backgroundColor: '#13141f', 
+                border: '1px solid #2d2e42', 
+                whiteSpace: 'pre-wrap',
+                minHeight: '100px'
+              }}
+            >
+              {viewingForm.NoiDung || <span style={{ color: '#8b8c9e', fontStyle: 'italic' }}>Không có mô tả</span>}
+            </div>
+          </div>
+          
+          <div className="mb-4">
+            <label className="form-label text-light fw-bold" style={{ color: '#8b8c9e' }}>Tệp tin đính kèm:</label>
+            <div className="mt-2">
+              {viewingForm.DuongDan ? (
+                <button 
+                  className="btn btn-info text-white d-flex align-items-center gap-2"
+                  onClick={() => handlePreview(viewingForm.DuongDan)}
+                >
+                  <span style={{ fontSize: '18px' }}>📄</span> Tải file đính kèm
+                </button>
+              ) : (
+                <span style={{ color: '#c4c4d4', fontStyle: 'italic' }}>Không có file đính kèm</span>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3" style={{ borderTop: '1px solid #2d2e42' }}>
+            <button 
+              type="button" 
+              className="btn btn-secondary px-4" 
+              onClick={() => setViewingForm(null)}
+            >
+              Quay lại danh sách
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
