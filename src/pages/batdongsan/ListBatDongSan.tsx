@@ -70,6 +70,7 @@ const ListBatDongSan = () => {
 
   const [localFilters, setLocalFilters] = useState(filters);
 
+  // Xử lý lọc thông minh (Quy đổi chuỗi giá trị thành số tiền Min/Max)
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
@@ -83,19 +84,13 @@ const ListBatDongSan = () => {
       else if (value === '10-50ty') { min = '10000000000'; max = '50000000000'; }
       else if (value === 'tren-50ty') { min = '50000000000'; }
 
-      setLocalFilters(prev => ({
-        ...prev,
-        giaMin: min,
-        giaMax: max
-      }));
+      setLocalFilters(prev => ({ ...prev, giaMin: min, giaMax: max }));
     } else {
-      setLocalFilters(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setLocalFilters(prev => ({ ...prev, [name]: value }));
     }
   };
 
+  // Dịch ngược lại từ số tiền ra hiển thị Dropdown
   const getSelectedPrice = (min: string, max: string) => {
     if (!min && max === '500000000') return 'duoi-500tr';
     if (min === '500000000' && max === '1000000000') return '500tr-1ty';
@@ -135,9 +130,7 @@ const ListBatDongSan = () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa tài sản này?')) {
       fetch(`http://localhost:4000/bat-dong-san/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       })
         .then((response) => {
           if (response.ok) {
@@ -147,9 +140,7 @@ const ListBatDongSan = () => {
             toast.error('Lỗi khi xóa tài sản hoặc bạn không có quyền thực hiện!');
           }
         })
-        .catch(() => {
-          toast.error('Lỗi kết nối mạng!');
-        });
+        .catch(() => toast.error('Lỗi kết nối mạng!'));
     }
   };
 
@@ -170,11 +161,11 @@ const ListBatDongSan = () => {
         </button>
       </div>
 
-      <div className="filter-section" style={{ backgroundColor: '#1e272e', padding: '20px', borderRadius: '10px', marginBottom: '25px', display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '140px' }}>
-          <label style={{ fontSize: '13px', color: '#bdc3c7', marginBottom: '6px', fontWeight: '500' }}>Loại BĐS</label>
-          <select name="loaiBDS" value={localFilters.loaiBDS} onChange={handleFilterChange} style={{ padding: '10px', borderRadius: '6px', backgroundColor: '#2d3436', color: 'white', border: '1px solid #4a5459', outline: 'none' }}>
+      {/* Áp dụng class bds-filter-card và filter-group chuẩn từ file CSS của bạn */}
+      <div className="bds-filter-card">
+        <div className="filter-group">
+          <label>Loại BĐS</label>
+          <select name="loaiBDS" value={localFilters.loaiBDS} onChange={handleFilterChange}>
             <option value="">-- Tất cả --</option>
             <option value="Nhà ở">Nhà ở</option>
             <option value="Đất nền">Đất nền</option>
@@ -184,14 +175,14 @@ const ListBatDongSan = () => {
           </select>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 2, minWidth: '180px' }}>
-          <label style={{ fontSize: '13px', color: '#bdc3c7', marginBottom: '6px', fontWeight: '500' }}>Địa chỉ cụ thể</label>
-          <input type="text" name="diaChi" value={localFilters.diaChi} onChange={handleFilterChange} placeholder="Tỉnh, thành, đường..." style={{ padding: '10px', borderRadius: '6px', backgroundColor: '#2d3436', color: 'white', border: '1px solid #4a5459', outline: 'none' }} />
+        <div className="filter-group">
+          <label>Địa chỉ cụ thể</label>
+          <input type="text" name="diaChi" value={localFilters.diaChi} onChange={handleFilterChange} placeholder="Tỉnh, thành, đường..." />
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '140px' }}>
-          <label style={{ fontSize: '13px', color: '#bdc3c7', marginBottom: '6px', fontWeight: '500' }}>Đặc điểm Vị trí</label>
-          <input type="text" name="viTri" value={localFilters.viTri} onChange={handleFilterChange} placeholder="Mặt tiền, ngõ..." style={{ padding: '10px', borderRadius: '6px', backgroundColor: '#2d3436', color: 'white', border: '1px solid #4a5459', outline: 'none' }} />
+        <div className="filter-group">
+          <label>Đặc điểm Vị trí</label>
+          <input type="text" name="viTri" value={localFilters.viTri} onChange={handleFilterChange} placeholder="Mặt tiền, ngõ..." />
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', flex: 2, minWidth: '180px' }}>
@@ -213,9 +204,9 @@ const ListBatDongSan = () => {
           </select>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: '120px' }}>
-          <label style={{ fontSize: '13px', color: '#bdc3c7', marginBottom: '6px', fontWeight: '500' }}>Hướng</label>
-          <select name="huong" value={localFilters.huong} onChange={handleFilterChange} style={{ padding: '10px', borderRadius: '6px', backgroundColor: '#2d3436', color: 'white', border: '1px solid #4a5459', outline: 'none' }}>
+        <div className="filter-group">
+          <label>Hướng</label>
+          <select name="huong" value={localFilters.huong} onChange={handleFilterChange}>
             <option value="">-- Tất cả --</option>
             <option value="Đông">Đông</option>
             <option value="Tây">Tây</option>
@@ -228,13 +219,9 @@ const ListBatDongSan = () => {
           </select>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px', flex: 1, minWidth: '220px' }}>
-          <button onClick={handleSearch} style={{ flex: 1, padding: '10px', backgroundColor: '#0984e3', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', transition: 'background-color 0.2s' }} onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#74b9ff'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0984e3'}>
-            Tìm kiếm
-          </button>
-          <button onClick={handleClearFilter} style={{ flex: 1, padding: '10px', backgroundColor: 'transparent', color: '#ff7675', border: '1px solid #ff7675', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', transition: 'all 0.2s' }} onMouseOver={(e) => {e.currentTarget.style.backgroundColor = '#ff7675'; e.currentTarget.style.color = 'white'}} onMouseOut={(e) => {e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = '#ff7675'}}>
-            Xóa lọc
-          </button>
+        <div className="filter-actions">
+          <button className="btn-search" onClick={handleSearch}>Tìm kiếm</button>
+          <button className="btn-clear" onClick={handleClearFilter}>Xóa lọc</button>
         </div>
       </div>
 
@@ -248,7 +235,7 @@ const ListBatDongSan = () => {
               <th>Loại BĐS</th>
               <th>Địa chỉ</th>
               <th>Diện tích</th>
-              <th style={{ textAlign: 'right', paddingRight: '15px' }}>Giá tiền</th>
+              <th style={{ textAlign: 'right' }}>Giá tiền</th>
               <th>Tình trạng</th>
               <th>Hành động</th>
             </tr>
@@ -263,7 +250,7 @@ const ListBatDongSan = () => {
                   <td>{bds.loaiBDS}</td>
                   <td>{bds.diaChi}</td>
                   <td>{bds.dienTich} m²</td>
-                  <td style={{ textAlign: 'right', paddingRight: '15px', fontWeight: '600', color: '#f1c40f' }}>
+                  <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#f1c40f' }}>
                     {Number(bds.giaTien).toLocaleString('vi-VN')} đ
                   </td>
                   <td>
@@ -285,7 +272,7 @@ const ListBatDongSan = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={9} style={{ textAlign: 'center', padding: '30px', color: '#95a5a6' }}>
+                <td colSpan={9} style={{ textAlign: 'center', color: '#bdc3c7' }}>
                   Không tìm thấy tài sản nào phù hợp với điều kiện lọc
                 </td>
               </tr>
@@ -295,12 +282,12 @@ const ListBatDongSan = () => {
       </div>
 
       {totalPages > 1 && (
-        <div className="pagination" style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'flex-end' }}>
-          <button disabled={currentPage === 1} onClick={() => handlePageChange(currentPage - 1)} style={{ padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>
+        <div className="pagination">
+          <button disabled={currentPage === 1} onClick={() => handlePageChange(currentPage - 1)}>
             Trang trước
           </button>
-          <span style={{ padding: '8px' }}>Trang {currentPage} / {totalPages}</span>
-          <button disabled={currentPage === totalPages} onClick={() => handlePageChange(currentPage + 1)} style={{ padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>
+          <span>Trang {currentPage} / {totalPages}</span>
+          <button disabled={currentPage === totalPages} onClick={() => handlePageChange(currentPage + 1)}>
             Trang sau
           </button>
         </div>
