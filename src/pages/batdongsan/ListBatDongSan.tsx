@@ -22,6 +22,12 @@ const ListBatDongSan = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('accessToken') || '';
 
+  // 💡 1. LẤY QUYỀN USER ĐỂ ẨN NÚT & ĐIỀU HƯỚNG ĐỘNG
+  const userRaw = localStorage.getItem('user');
+  const currentUser = userRaw ? JSON.parse(userRaw) : null;
+  const isAdmin = currentUser && String(currentUser.Role || currentUser.role).toLowerCase() === 'admin';
+  const basePath = isAdmin ? '/admin' : '/employee'; // Điều hướng đúng luồng
+
   const fetchBDS = useCallback(() => {
     const hasFilters = filters.loaiBDS || filters.viTri || filters.diaChi || filters.giaMin || filters.giaMax || filters.huong;
     
@@ -64,13 +70,11 @@ const ListBatDongSan = () => {
 
   const [localFilters, setLocalFilters] = useState(filters);
 
-  // HÀM XỬ LÝ LỌC THÔNG MINH (Dịch Mức Giá ra Min/Max)
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
     if (name === 'mucGia') {
       let min = '', max = '';
-      // Quy đổi lựa chọn thành các con số thực tế
       if (value === 'duoi-500tr') { max = '500000000'; }
       else if (value === '500tr-1ty') { min = '500000000'; max = '1000000000'; }
       else if (value === '1-3ty') { min = '1000000000'; max = '3000000000'; }
@@ -92,7 +96,6 @@ const ListBatDongSan = () => {
     }
   };
 
-  // HÀM DỊCH NGƯỢC TỪ MIN/MAX ĐỂ HIỂN THỊ ĐÚNG LỰA CHỌN TRONG DROPDOWN
   const getSelectedPrice = (min: string, max: string) => {
     if (!min && max === '500000000') return 'duoi-500tr';
     if (min === '500000000' && max === '1000000000') return '500tr-1ty';
@@ -161,7 +164,8 @@ const ListBatDongSan = () => {
       
       <div className="bds-header">
         <h2>Danh sách Bất động sản</h2>
-        <button className="btn-add" onClick={() => navigate('/admin/bat-dong-san/add')}>
+        {/* 💡 2. Thay thế cứng /admin bằng basePath */}
+        <button className="btn-add" onClick={() => navigate(`${basePath}/bat-dong-san/add`)}>
           + Thêm Bất động sản
         </button>
       </div>
@@ -190,7 +194,6 @@ const ListBatDongSan = () => {
           <input type="text" name="viTri" value={localFilters.viTri} onChange={handleFilterChange} placeholder="Mặt tiền, ngõ..." style={{ padding: '10px', borderRadius: '6px', backgroundColor: '#2d3436', color: 'white', border: '1px solid #4a5459', outline: 'none' }} />
         </div>
 
-        {/* --- KHU VỰC CHỌN MỨC GIÁ CHUYÊN NGHIỆP --- */}
         <div style={{ display: 'flex', flexDirection: 'column', flex: 2, minWidth: '180px' }}>
           <label style={{ fontSize: '13px', color: '#bdc3c7', marginBottom: '6px', fontWeight: '500' }}>Mức giá</label>
           <select 
@@ -269,9 +272,14 @@ const ListBatDongSan = () => {
                     </span>
                   </td>
                   <td className="actions">
-                    <button className="btn-view" onClick={() => navigate(`/admin/bat-dong-san/detail/${bds.id}`)}>Xem</button>
-                    <button className="btn-edit" onClick={() => navigate(`/admin/bat-dong-san/edit/${bds.id}`)}>Sửa</button>
-                    <button className="btn-delete" onClick={() => handleDelete(bds.id)}>Xóa</button>
+                    {/* 💡 3. Sửa đường dẫn Xem & Sửa thành động theo basePath */}
+                    <button className="btn-view" onClick={() => navigate(`${basePath}/bat-dong-san/detail/${bds.id}`)}>Xem</button>
+                    <button className="btn-edit" onClick={() => navigate(`${basePath}/bat-dong-san/edit/${bds.id}`)}>Sửa</button>
+                    
+                    {/* 💡 4. ĐIỀU KIỆN ẨN: Nút Xóa chỉ hiện khi isAdmin = true */}
+                    {isAdmin && (
+                      <button className="btn-delete" onClick={() => handleDelete(bds.id)}>Xóa</button>
+                    )}
                   </td>
                 </tr>
               ))

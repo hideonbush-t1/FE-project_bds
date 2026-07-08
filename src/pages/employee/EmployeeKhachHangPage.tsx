@@ -14,6 +14,12 @@ export default function EmployeeKhachHangPage() {
   
   const itemsPerPage = 5;
 
+  // 💡 1. LẤY QUYỀN USER ĐỂ ẨN NÚT VÀ CHỈNH ĐƯỜNG DẪN ĐỘNG
+  const userRaw = localStorage.getItem('user');
+  const currentUser = userRaw ? JSON.parse(userRaw) : null;
+  const isAdmin = currentUser && String(currentUser.Role || currentUser.role).toLowerCase() === 'admin';
+  const basePath = isAdmin ? '/admin' : '/employee';
+
   const fetchKhachHang = async () => {
     try {
       const res = await http.get(`/khach-hang?search=${searchKey}&loaiKH=${loaiKH}`);
@@ -63,7 +69,6 @@ export default function EmployeeKhachHangPage() {
             style={{ padding: '10px', width: '250px', background: '#252830', border: '1px solid #444', color: '#fff', borderRadius: '4px' }} 
           />
           
-          {/* ĐÃ SỬA: Thay đổi options thành Cá nhân / Doanh nghiệp */}
           <select onChange={(e) => setLoaiKH(e.target.value)} style={{ padding: '10px', background: '#252830', border: '1px solid #444', color: '#fff', borderRadius: '4px' }}>
             <option value="">-- Tất cả loại --</option>
             <option value="Cá nhân">Cá nhân</option>
@@ -72,8 +77,8 @@ export default function EmployeeKhachHangPage() {
 
           <button 
             onClick={() => {
-               const user = JSON.parse(localStorage.getItem('user') || '{}');
-               navigate('/employee/khach-hang/create', { state: { nhanVienId: user.id } });
+               // 💡 Thay thế đường dẫn cứng thành biến động basePath
+               navigate(`${basePath}/khach-hang/create`, { state: { nhanVienId: currentUser?.id } });
             }} 
             style={{ padding: '10px 20px', backgroundColor: '#f1c40f', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', marginLeft: 'auto' }}
           >
@@ -81,7 +86,6 @@ export default function EmployeeKhachHangPage() {
           </button>
         </div>
 
-        {/* Bảng danh sách */}
         <table style={{ width: '100%', borderCollapse: 'collapse', background: '#252830', borderRadius: '8px', overflow: 'hidden' }}>
           <thead>
             <tr style={{ background: '#333', textAlign: 'left' }}>
@@ -107,9 +111,14 @@ export default function EmployeeKhachHangPage() {
                 <td style={{ padding: '15px' }}>{kh.nhanVienId || '—'}</td>
                 <td style={{ padding: '15px' }}>
                   <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                    <button onClick={() => navigate(`/employee/khach-hang/${kh.id}`)} style={{ background: '#3498db', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Xem</button>
-                    <button onClick={() => navigate(`/employee/khach-hang/edit/${kh.id}`)} style={{ background: '#f1c40f', color: '#000', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Sửa</button>
-                    <button onClick={() => setDeleteModal({ isOpen: true, id: kh.id })} style={{ background: '#e74c3c', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Xóa</button>
+                    {/* 💡 Sửa đường dẫn Xem & Sửa thành động theo basePath */}
+                    <button onClick={() => navigate(`${basePath}/khach-hang/${kh.id}`)} style={{ background: '#3498db', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Xem</button>
+                    <button onClick={() => navigate(`${basePath}/khach-hang/edit/${kh.id}`)} style={{ background: '#f1c40f', color: '#000', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Sửa</button>
+                    
+                    {/* 💡 ĐIỀU KIỆN ẨN NÚT XÓA: Chỉ khi là Admin thì nút Xóa mới hiện ra */}
+                    {isAdmin && (
+                      <button onClick={() => setDeleteModal({ isOpen: true, id: kh.id })} style={{ background: '#e74c3c', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Xóa</button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -119,7 +128,6 @@ export default function EmployeeKhachHangPage() {
           </tbody>
         </table>
 
-        {/* Phân trang */}
         <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '5px' }}>
           <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} style={{ padding: '8px 15px', background: '#333', color: '#fff', border: 'none', cursor: 'pointer' }}>Trước</button>
           <button style={{ padding: '8px 15px', background: '#f1c40f', color: '#000', border: 'none' }}>{currentPage}</button>
@@ -127,8 +135,8 @@ export default function EmployeeKhachHangPage() {
         </div>
       </div>
       
-      {/* Modal xóa */}
-      {deleteModal.isOpen && (
+      {/* 💡 Điều kiện phụ: Đảm bảo Modal Xóa cũng không bị render nhầm cho Employee */}
+      {deleteModal.isOpen && isAdmin && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
           <div style={{ background: '#252830', padding: '30px', borderRadius: '8px', border: '1px solid #444', color: '#fff' }}>
             <p>Bạn có chắc chắn muốn xóa khách hàng này?</p>

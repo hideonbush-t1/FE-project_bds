@@ -2,6 +2,9 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
+// 💡 IMPORT LỚP BẢO VỆ Ở ĐÂY
+import { ProtectedRoute } from './routes/ProtectedRoute';
+
 import { PublicLayout } from './layouts/PublicLayout';
 import { AdminLayout } from './layouts/AdminLayout';
 import { EmployeeLayout } from './layouts/EmployeeLayout';
@@ -50,7 +53,6 @@ import SuaKhachHang from './pages/employee/khachhang/SuaKhachHang';
 export function App() {
   return (
     <> 
-      {/* Cấu hình hiển thị thông báo */}
       <ToastContainer 
         position="top-right"
         autoClose={3000}
@@ -61,7 +63,7 @@ export function App() {
       />
       
       <Routes>
-        {/* 1. Các tuyến đường công khai (Public) */}
+        {/* 1. Tuyến đường Public (Không bảo vệ) */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/thong-bao" element={<NotificationsPage />} />
@@ -70,8 +72,15 @@ export function App() {
           <Route path="/register" element={<RegisterPage />} />
         </Route>
 
-        {/* 2. Các tuyến đường cho Quản trị viên (Admin) */}
-        <Route path="/admin" element={<AdminLayout />}>
+        {/* 2. Tuyến đường ADMIN (Bọc ProtectedRoute role="admin") */}
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute role="admin">
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="thong-ke" element={<AdminThongKePage />} />
           <Route path="nhan-vien" element={<AdminNhanVienPage />} />
@@ -79,13 +88,11 @@ export function App() {
           <Route path="nhan-vien/edit/:id" element={<EditNhanVien />} />
           <Route path="nhan-vien/detail/:id" element={<DetailNhanVien />} />
           
-          {/* Quản lý Khách Hàng - Admin */}
           <Route path="khach-hang" element={<AdminKhachHangPage />} />
           <Route path="khach-hang/create" element={<ThemKhachHang />} />
           <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
           <Route path="khach-hang/edit/:id" element={<SuaKhachHang />} />
           
-          {/* Quản lý Bất Động Sản - Admin */}
           <Route path="bat-dong-san" element={<ListBatDongSan />} />
           <Route path="bat-dong-san/add" element={<AddBatDongSan />} />
           <Route path="bat-dong-san/edit/:id" element={<EditBatDongSan />} />
@@ -98,17 +105,22 @@ export function App() {
           <Route path="profile" element={<AdminProfilePage />} />
         </Route>
 
-        {/* 3. Các tuyến đường cho Nhân viên (Employee) */}
-        <Route path="/employee" element={<EmployeeLayout />}>
+        {/* 3. Tuyến đường EMPLOYEE (Bọc ProtectedRoute role="employee") */}
+        <Route 
+          path="/employee" 
+          element={
+            <ProtectedRoute role="employee">
+              <EmployeeLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="dashboard" element={<EmployeeDashboardPage />} />
           
-          {/* Quản lý Khách Hàng - Employee */}
           <Route path="khach-hang" element={<EmployeeKhachHangPage />} />
           <Route path="khach-hang/create" element={<ThemKhachHang />} />
           <Route path="khach-hang/:id" element={<ChiTietKhachHang />} />
           <Route path="khach-hang/edit/:id" element={<SuaKhachHang />} />
           
-          {/* Quản lý Bất Động Sản - Employee */}
           <Route path="bat-dong-san" element={<ListBatDongSan />} />
           <Route path="bat-dong-san/add" element={<AddBatDongSan />} />
           <Route path="bat-dong-san/edit/:id" element={<EditBatDongSan />} />
@@ -121,7 +133,7 @@ export function App() {
           <Route path="profile" element={<EmployeeProfilePage />} />
         </Route>
 
-        {/* 4. Tự động chuyển hướng về trang chủ nếu gõ sai URL */}
+        {/* 4. Tự động chuyển hướng */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
