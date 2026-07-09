@@ -42,7 +42,6 @@ export function AdminNhuCauPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  // HÀM MỚI: CẬP NHẬT TRẠNG THÁI NHANH CHO ADMIN
   const handleUpdateStatus = async (id: string, newStatus: string) => {
     try {
       await http.patch(`/nhu-cau/${id}`, { tinhTrang: newStatus });
@@ -62,7 +61,7 @@ export function AdminNhuCauPage() {
   const handleOpenEdit = (record: any) => {
     setEditingId(record.id);
     form.setFieldsValue({
-      nhanVienId: record.nhanVienId, khachHangId: record.khachHangId,
+nhanVienId: record.nhanVienId, khachHangId: record.khachHangId,
       loaiNC: record.loaiNC, loaiBDS: record.loaiBDS, viTri: record.viTri,
       dienTichMin: record.dienTichMin, dienTichMax: record.dienTichMax,
       ghiChu: record.ghiChu, tinhTrang: record.tinhTrang
@@ -102,12 +101,12 @@ export function AdminNhuCauPage() {
   };
   
   const renderStatusTag = (status: string) => {
-    let color = 'processing'; // Xanh dương sáng mặc định cho "Đang tìm kiếm"
+    let color = 'processing'; 
     
     if (status === 'Đã hoàn thành') {
-      color = 'success'; // Xanh lá
+      color = 'success'; 
     } else if (status === 'Đã hủy') {
-      color = 'error'; // Đỏ
+      color = 'error'; 
     }
 
     return (
@@ -124,9 +123,8 @@ export function AdminNhuCauPage() {
     { title: 'MÃ NC', dataIndex: 'id', key: 'id', render: (t: any) => <Text strong className="text-white">{t}</Text> },
     { title: 'KHÁCH HÀNG', dataIndex: 'khachHangId', key: 'khachHangId', render: (t: any) => <span className="text-white font-semibold">{getKhachHangName(t)}</span> },
     { title: 'NHÂN VIÊN TẠO', dataIndex: 'nhanVienId', key: 'nhanVienId', render: (t: any) => <span className="text-gray-400">{t ? getNhanVienName(t) : 'Chưa rõ'}</span> },
-    { title: 'HÌNH THỨC', dataIndex: 'loaiNC', key: 'loaiNC', render: (v: string) => <Text style={{ color: v === 'Mua' ? GOLD_COLOR : '#fff' }} strong>{v}</Text> },
+{ title: 'HÌNH THỨC', dataIndex: 'loaiNC', key: 'loaiNC', render: (v: string) => <Text style={{ color: v === 'Mua' ? GOLD_COLOR : '#fff' }} strong>{v}</Text> },
     { title: 'LOẠI BĐS', dataIndex: 'loaiBDS', key: 'loaiBDS', render: (t: any) => <span className="text-gray-300">{t}</span> },
-    // ĐÃ SỬA: Đổi từ Tag cứng thành Select để Admin tự chọn trạng thái
     { 
       title: 'TRẠNG THÁI', 
       dataIndex: 'tinhTrang', 
@@ -154,16 +152,15 @@ export function AdminNhuCauPage() {
       key: 'matchingScore',
       width: 180,
       render: (score: number) => {
-        let strokeColor = '#ff4d4f'; // Dưới 50đ -> Màu Đỏ (Lệch nhiều)
-        if (score >= 80) strokeColor = '#52c41a'; // Trên 80đ -> Màu Xanh lá (Cực kỳ khớp)
-        else if (score >= 50) strokeColor = '#faad14'; // Từ 50 - 79đ -> Màu Vàng (Khá khớp)
+        let strokeColor = '#ff4d4f'; 
+        if (score >= 80) strokeColor = '#52c41a'; 
+        else if (score >= 50) strokeColor = '#faad14'; 
         
         return (
           <Progress 
             percent={score || 0} 
             size="small" 
             strokeColor={strokeColor}
-            // Fix màu chữ % cho nó sáng lên trong nền đen
             format={(percent) => <span style={{ color: '#fff', fontWeight: 'bold' }}>{percent}%</span>}
           />
         );
@@ -179,33 +176,37 @@ export function AdminNhuCauPage() {
   ];
 
   return (
-    <ConfigProvider theme={{ algorithm: theme.darkAlgorithm, token: { colorPrimary: GOLD_COLOR, colorBgBase: '#141414', colorBgContainer: '#1f1f1f', colorTextBase: '#ffffff' } }}>
+<ConfigProvider theme={{ algorithm: theme.darkAlgorithm, token: { colorPrimary: GOLD_COLOR, colorBgBase: '#141414', colorBgContainer: '#1f1f1f', colorTextBase: '#ffffff' } }}>
       {contextHolder}
       <div className="p-6 bg-[#141414] min-h-[85vh] text-white">
+        
+        {/* NGUYÊN GỐC HEADER TỪ CODE CỦA SẾP */}
         <div className="flex justify-between items-center mb-6 border-b border-[#333] pb-4">
           <Title level={3} style={{ margin: 0, color: GOLD_COLOR }}>Quản lý Nhu cầu</Title>
           <Space><Input placeholder="Tìm kiếm..." prefix={<SearchOutlined style={{ color: GOLD_COLOR }} />} style={{ width: '250px' }} onChange={(e) => setSearchText(e.target.value)} /><Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAdd} style={{ fontWeight: 600, color: '#000' }}>Thêm mới</Button></Space>
         </div>
-        <Table columns={columns} dataSource={nhuCauList.filter((i: any) => !searchText || i?.id?.toLowerCase().includes(searchText.toLowerCase()) || i?.khachHangId?.toLowerCase().includes(searchText.toLowerCase()))} rowKey="id" loading={loading} bordered pagination={{ pageSize: 10 }} />
+        
+        {/* ĐÃ THÊM: scroll={{ x: 'max-content' }} */}
+        <Table columns={columns} dataSource={nhuCauList.filter((i: any) => !searchText || i?.id?.toLowerCase().includes(searchText.toLowerCase()) || i?.khachHangId?.toLowerCase().includes(searchText.toLowerCase()))} rowKey="id" loading={loading} bordered pagination={{ pageSize: 10 }} scroll={{ x: 'max-content' }} />
 
         <Modal title={<div style={{ color: GOLD_COLOR, fontSize: '18px', paddingBottom: '10px' }}>{editingId ? 'CẬP NHẬT NHU CẦU' : 'TẠO NHU CẦU'}</div>} open={isFormVisible} onCancel={() => setIsFormVisible(false)} footer={null} width={750}>
           <Form form={form} layout="vertical" onFinish={handleFinishForm}>
+            {/* ĐÃ SỬA: span={12} thành xs={24} md={12} */}
             <Row gutter={[24, 16]}>
               <Col span={24}><Form.Item name="nhanVienId" label="Mã Nhân viên tạo"><Input placeholder="VD: NV001" /></Form.Item></Col>
               <Col span={24}><Form.Item name="khachHangId" label="Khách Hàng" rules={[{ required: true }]}><Select showSearch placeholder="Tìm tên..." options={khachHangOptions} optionFilterProp="label" /></Form.Item></Col>
-              <Col span={12}><Form.Item name="loaiNC" label="Hình thức" rules={[{ required: true }]}><Select options={[{value: 'Mua', label: 'Mua'}, {value: 'Thuê', label: 'Thuê'}]} /></Form.Item></Col>
-              <Col span={12}><Form.Item name="loaiBDS" label="Phân loại BĐS" rules={[{ required: true }]}><Select options={[{value: 'Chung cư', label: 'Chung cư'}, {value: 'Nhà phố', label: 'Nhà phố'}, {value: 'Đất nền', label: 'Đất nền'}]} /></Form.Item></Col>
+              <Col xs={24} md={12}><Form.Item name="loaiNC" label="Hình thức" rules={[{ required: true }]}><Select options={[{value: 'Mua', label: 'Mua'}, {value: 'Thuê', label: 'Thuê'}]} /></Form.Item></Col>
+              <Col xs={24} md={12}><Form.Item name="loaiBDS" label="Phân loại BĐS" rules={[{ required: true }]}><Select options={[{value: 'Chung cư', label: 'Chung cư'}, {value: 'Nhà phố', label: 'Nhà phố'}, {value: 'Đất nền', label: 'Đất nền'}]} /></Form.Item></Col>
               <Col span={24}><Form.Item name="viTri" label="Khu vực mong muốn" rules={[{ required: true }]}><Input /></Form.Item></Col>
-              <Col span={12}><Form.Item name="dienTichMin" label="Diện tích tối thiểu (m²)"><Input type="number" /></Form.Item></Col>
-              <Col span={12}><Form.Item name="dienTichMax" label="Diện tích tối đa (m²)"><Input type="number" /></Form.Item></Col>
-              {editingId && (<Col span={24}><Form.Item name="tinhTrang" label="Trạng thái"><Select options={[{value: 'Đang tìm kiếm', label: 'Đang tìm kiếm'}, {value: 'Đã hoàn thành', label: 'Đã hoàn thành'}, {value: 'Đã hủy', label: 'Đã hủy'}]} /></Form.Item></Col>)}
+              <Col xs={24} md={12}><Form.Item name="dienTichMin" label="Diện tích tối thiểu (m²)"><Input type="number" /></Form.Item></Col>
+              <Col xs={24} md={12}><Form.Item name="dienTichMax" label="Diện tích tối đa (m²)"><Input type="number" /></Form.Item></Col>
+{editingId && (<Col span={24}><Form.Item name="tinhTrang" label="Trạng thái"><Select options={[{value: 'Đang tìm kiếm', label: 'Đang tìm kiếm'}, {value: 'Đã hoàn thành', label: 'Đã hoàn thành'}, {value: 'Đã hủy', label: 'Đã hủy'}]} /></Form.Item></Col>)}
               <Col span={24}><Form.Item name="ghiChu" label="Ghi chú thêm"><Input.TextArea rows={4} /></Form.Item></Col>
             </Row>
             <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-[#333]"><Button onClick={() => setIsFormVisible(false)}>Hủy</Button><Button type="primary" htmlType="submit" style={{ color: '#000' }}>Lưu thông tin</Button></div>
           </Form>
         </Modal>
 
-        {/* MODAL CHI TIẾT - CĂN CHỈNH KHOẢNG CÁCH RỘNG */}
         <Modal title={<div style={{ color: GOLD_COLOR, textAlign: 'center', fontSize: '22px', borderBottom: '1px solid #333', paddingBottom: '16px' }}>HỒ SƠ NHU CẦU</div>} open={isDetailVisible} onCancel={() => setIsDetailVisible(false)} footer={null} width={800}>
           {detailData && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
@@ -217,17 +218,19 @@ export function AdminNhuCauPage() {
               </div>
               <div style={{ backgroundColor: '#1a1a1a', padding: '24px', borderRadius: '10px', border: '1px solid #333' }}>
                 <h3 style={{ color: GOLD_COLOR, fontSize: '17px', marginTop: 0, marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px dashed #444' }}><UserOutlined className="mr-2" /> THÔNG TIN ĐỐI TÁC</h3>
+                {/* ĐÃ SỬA: span={12} thành xs={24} md={12} */}
                 <Row gutter={[32, 24]}>
-                  <Col span={12}><div style={{ color: '#aaa', fontSize: '14px', marginBottom: '8px' }}>Khách Hàng</div><div style={{ color: '#fff', fontSize: '16px', fontWeight: 'bold' }}>{getKhachHangName(detailData.khachHangId)}</div></Col>
-                  <Col span={12}><div style={{ color: '#aaa', fontSize: '14px', marginBottom: '8px' }}>Nhân Viên Tạo Đơn</div><div style={{ fontSize: '16px' }}>{detailData.nhanVienId ? <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{getNhanVienName(detailData.nhanVienId)}</span> : <span style={{ color: '#888' }}>Chưa rõ</span>}</div></Col>
-                </Row>
+                  <Col xs={24} md={12}><div style={{ color: '#aaa', fontSize: '14px', marginBottom: '8px' }}>Khách Hàng</div><div style={{ color: '#fff', fontSize: '16px', fontWeight: 'bold' }}>{getKhachHangName(detailData.khachHangId)}</div></Col>
+                  <Col xs={24} md={12}><div style={{ color: '#aaa', fontSize: '14px', marginBottom: '8px' }}>Nhân Viên Tạo Đơn</div><div style={{ fontSize: '16px' }}>{detailData.nhanVienId ? <span style={{ color: '#52c41a', fontWeight: 'bold' }}>{getNhanVienName(detailData.nhanVienId)}</span> : <span style={{ color: '#888' }}>Chưa rõ</span>}</div></Col>
+</Row>
               </div>
               <div style={{ backgroundColor: '#1a1a1a', padding: '24px', borderRadius: '10px', border: '1px solid #333' }}>
                 <h3 style={{ color: '#52c41a', fontSize: '17px', marginTop: 0, marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px dashed #444' }}><HomeOutlined className="mr-2" /> TIÊU CHÍ BẤT ĐỘNG SẢN</h3>
+                {/* ĐÃ SỬA: span={8} thành xs={24} md={8} */}
                 <Row gutter={[32, 24]}>
-                  <Col span={8}><div style={{ color: '#aaa', fontSize: '14px', marginBottom: '8px' }}>Hình thức</div><div style={{ color: GOLD_COLOR, fontSize: '16px', fontWeight: 'bold' }}>{detailData.loaiNC}</div></Col>
-                  <Col span={8}><div style={{ color: '#aaa', fontSize: '14px', marginBottom: '8px' }}>Loại BĐS</div><div style={{ color: '#fff', fontSize: '16px' }}>{detailData.loaiBDS}</div></Col>
-                  <Col span={8}><div style={{ color: '#aaa', fontSize: '14px', marginBottom: '8px' }}>Diện tích</div><div style={{ color: '#fff', fontSize: '16px' }}>{detailData.dienTichMin || 0} - {detailData.dienTichMax || '∞'} m²</div></Col>
+                  <Col xs={24} md={8}><div style={{ color: '#aaa', fontSize: '14px', marginBottom: '8px' }}>Hình thức</div><div style={{ color: GOLD_COLOR, fontSize: '16px', fontWeight: 'bold' }}>{detailData.loaiNC}</div></Col>
+                  <Col xs={24} md={8}><div style={{ color: '#aaa', fontSize: '14px', marginBottom: '8px' }}>Loại BĐS</div><div style={{ color: '#fff', fontSize: '16px' }}>{detailData.loaiBDS}</div></Col>
+                  <Col xs={24} md={8}><div style={{ color: '#aaa', fontSize: '14px', marginBottom: '8px' }}>Diện tích</div><div style={{ color: '#fff', fontSize: '16px' }}>{detailData.dienTichMin || 0} - {detailData.dienTichMax || '∞'} m²</div></Col>
                   <Col span={24}><div style={{ color: '#aaa', fontSize: '14px', marginBottom: '8px' }}>Khu vực</div><div style={{ color: '#fff', fontSize: '16px', lineHeight: '1.6' }}>{detailData.viTri}</div></Col>
                 </Row>
               </div>
@@ -236,7 +239,8 @@ export function AdminNhuCauPage() {
         </Modal>
 
         <Modal title={<div style={{ color: '#52c41a' }}><ThunderboltOutlined className="mr-2" /> GỢI Ý BẤT ĐỘNG SẢN</div>} open={isSuggestModalVisible} onCancel={() => setIsSuggestModalVisible(false)} footer={null} width={1050}>
-          <div className="mt-4">{suggestList.length > 0 ? <Table columns={suggestColumns} dataSource={suggestList} rowKey="id" loading={loadingSuggest} pagination={{ pageSize: 5 }} bordered /> : <div className="text-center py-10"><Text style={{ color: '#ff4d4f', fontSize: '16px' }}>Không có Bất động sản trống nào phù hợp.</Text></div>}</div>
+          {/* ĐÃ THÊM: scroll={{ x: 'max-content' }} */}
+          <div className="mt-4">{suggestList.length > 0 ? <Table columns={suggestColumns} dataSource={suggestList} rowKey="id" loading={loadingSuggest} pagination={{ pageSize: 5 }} bordered scroll={{ x: 'max-content' }} /> : <div className="text-center py-10"><Text style={{ color: '#ff4d4f', fontSize: '16px' }}>Không có Bất động sản trống nào phù hợp.</Text></div>}</div>
         </Modal>
       </div>
     </ConfigProvider>

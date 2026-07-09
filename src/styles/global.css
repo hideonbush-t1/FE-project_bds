@@ -2164,3 +2164,51 @@ input[type="file"]::file-selector-button {
   color: #000 !important;
   background-color: #fff !important;
 }
+
+/* =========== DIỆT TẬN GỐC LỖI TÀNG HÌNH CHỮ TRONG SELECT =========== */
+
+/* 1. Ép thẻ input ẩn bên trong Select phải TRONG SUỐT để không che mất chữ */
+html body .ant-select input {
+    background-color: transparent !important;
+    color: #ffffff !important;
+}
+
+/* 2. Đảm bảo chữ hiển thị (item đã chọn và chữ mờ placeholder) luôn là màu trắng */
+html body .ant-select .ant-select-selection-item,
+html body .ant-select .ant-select-selection-placeholder {
+    color: #ffffff !important;
+}
+
+/* 3. Ô Select và Input/Textarea đổi thành nền đen, viền vàng */
+html body .ant-select .ant-select-selector,
+html body input.ant-input,
+html body textarea.ant-input {
+    background-color: #1f1f1f !important;
+    border-color: #D4AF37 !important;
+    color: #ffffff !important;
+}
+
+/* 4. Đổi màu viền khi click (focus) vào ô nhập liệu */
+html body .ant-select-focused .ant-select-selector,
+html body input.ant-input:focus,
+html body textarea.ant-input:focus {
+    border-color: #F5D76E !important;
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2) !important;
+}
+
+/* 5. Mũi tên Select đổi sang màu Vàng Gold */
+html body .ant-select-arrow {
+    color: #D4AF37 !important;
+}
+
+/* 6. Ép Menu Dropdown xổ xuống thành nền đen cho đồng bộ Theme */
+html body .ant-select-dropdown {
+    background-color: #1f1f1f !important;
+    border: 1px solid #D4AF37 !important;
+}
+html body .ant-select-dropdown .ant-select-item {
+    color: #ffffff !important;
+}
+html body .ant-select-dropdown .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+    background-color: rgba(212, 175, 55, 0.2) !important;
+}
