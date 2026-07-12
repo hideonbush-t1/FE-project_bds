@@ -163,10 +163,22 @@
 .bds-table th, .bds-table td {
   padding: 16px;
   text-align: left;
-  border-bottom: 1px solid #4a4e69;
+  border-bottom: none !important;
   vertical-align: middle;
 }
+.bds-table th.actions,
+.bds-table td.actions {
+    text-align: center;
+}
 
+/* Căn giữa các nút bên trong */
+.bds-table td.actions {
+    display: flex;
+    justify-content: center; /* Căn giữa theo chiều ngang */
+    align-items: center;     /* Căn giữa theo chiều dọc */
+    gap: 8px;                /* Khoảng cách giữa các nút */
+    flex-wrap: wrap;         /* Cho phép xuống dòng nếu màn hình nhỏ */
+}
 .bds-table th { color: #f1c40f; font-weight: bold; }
 
 .bds-table td:nth-child(1),

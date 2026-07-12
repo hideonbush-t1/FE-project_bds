@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { http } from '../../api/http';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import '../batdongsan/BatDongSan.css'; // Dùng chung CSS của Bất động sản
 
 export default function EmployeeKhachHangPage() {
   const navigate = useNavigate();
@@ -12,13 +13,14 @@ export default function EmployeeKhachHangPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; id: string | null }>({ isOpen: false, id: null });
   
-  const itemsPerPage = 5;
+  const itemsPerPage = 8; // Tăng lên 8 cho đồng bộ với các trang khác
 
   // 💡 1. LẤY QUYỀN USER ĐỂ ẨN NÚT VÀ CHỈNH ĐƯỜNG DẪN ĐỘNG
   const userRaw = localStorage.getItem('user');
   const currentUser = userRaw ? JSON.parse(userRaw) : null;
   const isAdmin = currentUser && String(currentUser.Role || currentUser.role).toLowerCase() === 'admin';
   const basePath = isAdmin ? '/admin' : '/employee';
+  const GOLD_COLOR = '#D4AF37';
 
   const fetchKhachHang = async () => {
     try {
@@ -56,93 +58,141 @@ export default function EmployeeKhachHangPage() {
   const currentItems = khachHangList.slice(indexOfFirstItem, indexOfLastItem);
 
   return (
-    <div style={{ padding: '40px 20px', backgroundColor: '#1a1c23', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
-      <ToastContainer theme="dark" position="top-right" />
+    <div className="bds-container">
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
       
-      <div style={{ width: '100%', maxWidth: '1200px', color: '#fff' }}>
-        <h2 style={{ borderBottom: '2px solid #333', paddingBottom: '10px' }}>📋 QUẢN LÝ KHÁCH HÀNG</h2>
+      {/* HEADER ĐỒNG BỘ */}
+      <div className="bds-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+        <h2>Danh sách Khách hàng</h2>
         
-        <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
           <input 
-            placeholder="Tìm theo Mã, Tên, SĐT..." 
-            onChange={(e) => setSearchKey(e.target.value)} 
-            style={{ padding: '10px', width: '250px', background: '#252830', border: '1px solid #444', color: '#fff', borderRadius: '4px' }} 
+            type="text" 
+            placeholder="Tìm theo Mã, Tên, SĐT..."
+            value={searchKey}
+            onChange={(e) => setSearchKey(e.target.value)}
+            style={{ 
+              padding: '10px 15px', borderRadius: '6px', border: '1px solid #4a4e69', 
+              backgroundColor: '#1a1a2e', color: '#fff', width: '250px', outline: 'none'
+            }}
           />
           
-          <select onChange={(e) => setLoaiKH(e.target.value)} style={{ padding: '10px', background: '#252830', border: '1px solid #444', color: '#fff', borderRadius: '4px' }}>
-            <option value="">-- Tất cả loại --</option>
+          <select 
+            onChange={(e) => setLoaiKH(e.target.value)}
+            style={{ 
+              padding: '10px 15px', borderRadius: '6px', border: '1px solid #4a4e69', 
+              backgroundColor: '#1a1a2e', color: '#fff', outline: 'none'
+            }}
+          >
+            <option value="">Tất cả loại KH</option>
             <option value="Cá nhân">Cá nhân</option>
             <option value="Doanh nghiệp">Doanh nghiệp</option>
           </select>
 
           <button 
-            onClick={() => {
-               // 💡 Thay thế đường dẫn cứng thành biến động basePath
-               navigate(`${basePath}/khach-hang/create`, { state: { nhanVienId: currentUser?.id } });
-            }} 
-            style={{ padding: '10px 20px', backgroundColor: '#f1c40f', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', marginLeft: 'auto' }}
+            className="btn-add" 
+            onClick={() => navigate(`${basePath}/khach-hang/create`, { state: { nhanVienId: currentUser?.id } })}
           >
             + Tiếp Nhận Khách Hàng
           </button>
         </div>
+      </div>
 
-        <table style={{ width: '100%', borderCollapse: 'collapse', background: '#252830', borderRadius: '8px', overflow: 'hidden' }}>
+      {/* BẢNG DỮ LIỆU ĐỒNG BỘ */}
+      <div className="bds-table-wrapper">
+        <table className="bds-table">
           <thead>
-            <tr style={{ background: '#333', textAlign: 'left' }}>
-              <th style={{ padding: '15px' }}>Mã KH</th>
-              <th style={{ padding: '15px' }}>Tên khách hàng</th>
-              <th style={{ padding: '15px' }}>Loại</th>
-              <th style={{ padding: '15px' }}>Địa chỉ</th>
-              <th style={{ padding: '15px' }}>SĐT</th>
-              <th style={{ padding: '15px' }}>CMND</th>
-              <th style={{ padding: '15px' }}>NV Quản Lý</th>
-              <th style={{ padding: '15px' }}>Thao tác</th>
+            <tr>
+              <th>Mã KH</th>
+              <th>Tên khách hàng</th>
+              <th>Loại</th>
+              <th>Địa chỉ</th>
+              <th>SĐT</th>
+              <th>CMND</th>
+              <th>NV Quản Lý</th>
+              <th className="actions">Thao tác</th>
             </tr>
           </thead>
           <tbody>
             {currentItems.length > 0 ? currentItems.map((kh: any) => (
-              <tr key={kh.id} style={{ borderBottom: '1px solid #3d4149' }}>
-                <td style={{ padding: '15px' }}>{kh.id}</td>
-                <td style={{ padding: '15px' }}>{kh.hoTen}</td>
-                <td style={{ padding: '15px' }}>{kh.loaiKH}</td>
-                <td style={{ padding: '15px', color: '#aaa', fontSize: '0.9em' }}>{kh.diaChi || '—'}</td>
-                <td style={{ padding: '15px' }}>{kh.soDienThoai}</td>
-                <td style={{ padding: '15px' }}>{kh.soCMND || '—'}</td>
-                <td style={{ padding: '15px' }}>{kh.nhanVienId || '—'}</td>
-                <td style={{ padding: '15px' }}>
-                  <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                    {/* 💡 Sửa đường dẫn Xem & Sửa thành động theo basePath */}
-                    <button onClick={() => navigate(`${basePath}/khach-hang/${kh.id}`)} style={{ background: '#3498db', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Xem</button>
-                    <button onClick={() => navigate(`${basePath}/khach-hang/edit/${kh.id}`)} style={{ background: '#f1c40f', color: '#000', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Sửa</button>
-                    
-                    {/* 💡 ĐIỀU KIỆN ẨN NÚT XÓA: Chỉ khi là Admin thì nút Xóa mới hiện ra */}
-                    {isAdmin && (
-                      <button onClick={() => setDeleteModal({ isOpen: true, id: kh.id })} style={{ background: '#e74c3c', color: '#fff', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Xóa</button>
-                    )}
-                  </div>
+              <tr key={kh.id}>
+                <td style={{ fontWeight: 'bold' }}>{kh.id}</td>
+                <td style={{ fontWeight: 'bold', color: GOLD_COLOR }}>{kh.hoTen}</td>
+                <td>
+                  <span className={`status ${kh.loaiKH === 'Doanh nghiệp' ? 'sold' : 'available'}`}>
+                    {kh.loaiKH}
+                  </span>
+                </td>
+                <td style={{ color: '#ccc' }}>{kh.diaChi && kh.diaChi.length > 30 ? `${kh.diaChi.substring(0, 30)}...` : (kh.diaChi || '—')}</td>
+                <td style={{ fontWeight: 'bold' }}>{kh.soDienThoai}</td>
+                <td>{kh.soCMND || '—'}</td>
+                <td style={{ color: '#3498db', fontWeight: 'bold' }}>{kh.nhanVienId || '—'}</td>
+                <td className="actions">
+                  <button className="btn-view" onClick={() => navigate(`${basePath}/khach-hang/${kh.id}`)}>Xem</button>
+                  <button className="btn-edit" onClick={() => navigate(`${basePath}/khach-hang/edit/${kh.id}`)}>Sửa</button>
+                  
+                  {/* 💡 Chỉ hiển thị nút Xóa nếu là Admin */}
+                  {isAdmin && (
+                    <button className="btn-delete" onClick={() => setDeleteModal({ isOpen: true, id: kh.id })}>Xóa</button>
+                  )}
                 </td>
               </tr>
             )) : (
-              <tr><td colSpan={8} style={{ padding: '20px', textAlign: 'center' }}>Không tìm thấy dữ liệu</td></tr>
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>
+                  {searchKey || loaiKH ? 'Không tìm thấy khách hàng nào phù hợp' : 'Không có dữ liệu khách hàng'}
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
-
-        <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '5px' }}>
-          <button disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)} style={{ padding: '8px 15px', background: '#333', color: '#fff', border: 'none', cursor: 'pointer' }}>Trước</button>
-          <button style={{ padding: '8px 15px', background: '#f1c40f', color: '#000', border: 'none' }}>{currentPage}</button>
-          <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(prev => prev + 1)} style={{ padding: '8px 15px', background: '#333', color: '#fff', border: 'none', cursor: 'pointer' }}>Sau</button>
-        </div>
       </div>
+
+      {/* PHÂN TRANG ĐỒNG BỘ */}
+      {totalPages > 1 && (
+        <div className="pagination" style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'flex-end' }}>
+          <button 
+            disabled={currentPage === 1} 
+            onClick={() => setCurrentPage(prev => prev - 1)} 
+            style={{ padding: '8px 16px', borderRadius: '4px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+          >
+            Trang trước
+          </button>
+          <span style={{ padding: '8px', color: GOLD_COLOR, fontWeight: 'bold' }}>
+            Trang {currentPage} / {totalPages}
+          </span>
+          <button 
+            disabled={currentPage >= totalPages} 
+            onClick={() => setCurrentPage(prev => prev + 1)} 
+            style={{ padding: '8px 16px', borderRadius: '4px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+          >
+            Trang sau
+          </button>
+        </div>
+      )}
       
-      {/* 💡 Điều kiện phụ: Đảm bảo Modal Xóa cũng không bị render nhầm cho Employee */}
+      {/* POPUP XÓA ĐỒNG BỘ */}
       {deleteModal.isOpen && isAdmin && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 999 }}>
-          <div style={{ background: '#252830', padding: '30px', borderRadius: '8px', border: '1px solid #444', color: '#fff' }}>
-            <p>Bạn có chắc chắn muốn xóa khách hàng này?</p>
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-              <button onClick={() => setDeleteModal({ isOpen: false, id: null })} style={{ padding: '8px 15px', cursor: 'pointer' }}>Hủy</button>
-              <button onClick={confirmDelete} style={{ background: '#e74c3c', color: '#fff', border: 'none', padding: '8px 15px', cursor: 'pointer' }}>Xác nhận</button>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+          <div style={{ backgroundColor: '#1a1a2e', padding: '30px', borderRadius: '12px', border: '1px solid #e74c3c', width: '400px', textAlign: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.5)' }}>
+            <h3 style={{ color: '#e74c3c', marginTop: 0, marginBottom: '15px' }}>⚠️ Xác nhận xóa</h3>
+            <p style={{ color: '#ecf0f1', marginBottom: '25px', lineHeight: '1.5' }}>
+              Bạn có chắc chắn muốn xóa khách hàng <strong>{deleteModal.id}</strong> không?<br/> 
+              Hành động này không thể hoàn tác!
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+              <button 
+                onClick={() => setDeleteModal({ isOpen: false, id: null })} 
+                style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', backgroundColor: '#95a5a6', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                onClick={confirmDelete} 
+                style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', backgroundColor: '#e74c3c', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
+              >
+                Đồng ý xóa
+              </button>
             </div>
           </div>
         </div>
