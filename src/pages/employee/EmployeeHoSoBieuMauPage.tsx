@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import '../batdongsan/BatDongSan.css'; // Dùng chung CSS hệ thống
 import { http } from '../../api/http';
-import toast, { Toaster } from 'react-hot-toast';
+import { FileTextOutlined, FileOutlined } from '@ant-design/icons';
 
 interface BieuMau {
   MaHoSo: number;
@@ -9,44 +12,14 @@ interface BieuMau {
   DuongDan: string;
 }
 
-// Hàm hỗ trợ tải về (được định nghĩa ngoài component để dùng chung)
-const handleDownload = async (maHoSo: number, tenHoSo: string) => {
-  const toastId = toast.loading('Đang xử lý file tải về...');
-  try {
-    const response = await http.get(`/ho-so-bieu-mau/download/${maHoSo}`, {
-      responseType: 'blob',
-    });
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    const safeFileName = `${tenHoSo.replace(/\s+/g, '_')}_TaiVe`;
-    link.setAttribute('download', safeFileName); 
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-    toast.success('Tải file thành công!', { id: toastId });
-  } catch (error) {
-    console.error("Lỗi tải file:", error);
-    toast.error('Không thể tải file, vui lòng thử lại!', { id: toastId });
-  }
-};
-
-// Hàm hỗ trợ xem trước
-const handlePreview = (duongDan: string | undefined) => {
-  if (!duongDan) {
-    toast.error('Biểu mẫu này chưa có file hoặc đường dẫn bị trống!');
-    return;
-  }
-  const fileUrl = duongDan.startsWith('http') 
-    ? duongDan 
-    : `http://localhost:4000/${duongDan.startsWith('/') ? duongDan.slice(1) : duongDan}`;
-  window.open(fileUrl, '_blank');
-};
-
 export function EmployeeHoSoBieuMauPage() {
-  const [viewingForm, setViewingForm] = useState<BieuMau | null>(null);
   const [forms, setForms] = useState<BieuMau[]>([]);
+  const [viewingForm, setViewingForm] = useState<BieuMau | null>(null);
+  const [searchText, setSearchText] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  const GOLD_COLOR = '#D4AF37';
 
   useEffect(() => { 
     fetchForms(); 
@@ -55,100 +28,108 @@ export function EmployeeHoSoBieuMauPage() {
   const fetchForms = async () => {
     try {
       const response = await http.get('/ho-so-bieu-mau');
-      setForms(response.data);
+      setForms(response.data || []);
     } catch (error) {
-      console.error("Lỗi tải danh sách:", error);
-      toast.error('Không thể tải danh sách dữ liệu!');
+      toast.error('Không thể tải danh sách biểu mẫu!');
     }
   };
 
-  const styles = {
-    container: { padding: '20px', color: '#fff', width: '100%' },
-    card: { backgroundColor: '#1e1f2f', borderColor: '#2d2e42', color: '#fff' },
-    tableHeader: { color: '#f8cc46', borderBottom: '1px solid #2d2e42', backgroundColor: 'transparent' },
-    tableCell: { color: '#c4c4d4', borderBottom: '1px solid #2d2e42', verticalAlign: 'middle', backgroundColor: 'transparent' },
+  const handleDownload = async (maHoSo: number, tenHoSo: string) => {
+    const toastId = toast.loading('Đang tải file...');
+    try {
+      const response = await http.get(`/ho-so-bieu-mau/download/${maHoSo}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${tenHoSo.replace(/\s+/g, '_')}_TaiVe`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.update(toastId, { render: 'Tải file thành công!', type: 'success', isLoading: false, autoClose: 3000 });
+    } catch (error) {
+      toast.update(toastId, { render: 'Tải file thất bại!', type: 'error', isLoading: false, autoClose: 3000 });
+    }
   };
 
+  const handlePreview = (duongDan: string | undefined) => {
+    if (!duongDan) return toast.error('Đường dẫn trống!');
+    const fileUrl = duongDan.startsWith('http') ? duongDan : `http://localhost:4000/${duongDan.startsWith('/') ? duongDan.slice(1) : duongDan}`;
+    window.open(fileUrl, '_blank');
+  };
+
+  const filteredList = forms.filter(f => f.TenHoSo.toLowerCase().includes(searchText.toLowerCase()));
+  const currentItems = filteredList.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredList.length / itemsPerPage));
+
   return (
-    <div style={styles.container}>
-      <Toaster position="top-right" reverseOrder={false} />
+    <div className="bds-container">
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+      
+      {/* HEADER ĐỒNG BỘ */}
+      <div className="bds-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+        <h2>Danh sách Biểu mẫu</h2>
+        <input 
+          type="text" placeholder="Tìm theo tên hồ sơ..." value={searchText}
+          onChange={(e) => { setSearchText(e.target.value); setCurrentPage(1); }}
+          style={{ padding: '10px 15px', borderRadius: '6px', border: '1px solid #4a4e69', backgroundColor: '#1a1a2e', color: '#fff', width: '280px', outline: 'none' }}
+        />
+      </div>
 
-      {/* Màn hình Danh sách */}
-      {!viewingForm && (
+      {!viewingForm ? (
         <>
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2 style={{ color: '#f8cc46' }}>Danh sách Biểu mẫu</h2>
+          <div className="bds-table-wrapper">
+            <table className="bds-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th style={{ width: '40%' }}>Tên hồ sơ</th>
+                  <th className="actions">Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentItems.map((form, index) => (
+                  <tr key={form.MaHoSo}>
+                    <td style={{ fontWeight: 'bold' }}>#{index + 1}</td>
+                    <td style={{ color: GOLD_COLOR, fontWeight: 'bold' }}>{form.TenHoSo}</td>
+                    <td className="actions">
+                      <button className="btn-view" onClick={() => setViewingForm(form)}>Xem</button>
+                      <button style={{ backgroundColor: '#27ae60', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }} 
+                              onClick={() => handleDownload(form.MaHoSo, form.TenHoSo)}>Tải</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <div className="card" style={styles.card}>
-            <div className="card-body">
-              <div className="table-responsive">
-                <table className="table table-dark table-borderless align-middle mb-0" style={{ backgroundColor: 'transparent' }}>
-                  <thead>
-                    <tr>
-                      <th style={styles.tableHeader}>STT</th>
-                      <th style={styles.tableHeader}>Tên hồ sơ</th>
-                      <th style={styles.tableHeader}>Hành động</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {forms.length === 0 ? (
-                      <tr>
-                        <td colSpan={3} className="text-center py-4" style={{ color: '#f8cc46' }}>
-                          Không có dữ liệu biểu mẫu nào được tìm thấy
-                        </td>
-                      </tr>
-                    ) : (
-                      forms.map((form, index) => (
-                        <tr key={form.MaHoSo}>
-                          <td style={styles.tableCell}>{index + 1}</td>
-                          <td style={styles.tableCell}>{form.TenHoSo}</td>
-                          <td style={styles.tableCell}>
-                            <div className="d-flex gap-2">
-                              <button className="btn btn-sm btn-info text-white" onClick={() => setViewingForm(form)}>Xem</button>
-                              <button className="btn btn-sm btn-success" onClick={() => handleDownload(form.MaHoSo, form.TenHoSo)}>Tải</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+
+          {totalPages > 1 && (
+            <div className="pagination" style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'flex-end' }}>
+              <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>Trước</button>
+              <span style={{ color: GOLD_COLOR, fontWeight: 'bold' }}>Trang {currentPage} / {totalPages}</span>
+              <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>Sau</button>
+            </div>
+          )}
+        </>
+      ) : (
+        <div style={{ backgroundColor: '#1a1a2e', padding: '30px', borderRadius: '12px', border: '1px solid #333' }}>
+          <h2 style={{ color: GOLD_COLOR, marginBottom: '20px' }}>{viewingForm.TenHoSo}</h2>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={{ color: '#aaa', fontWeight: 'bold' }}>Mô tả:</p>
+            <div style={{ padding: '15px', backgroundColor: '#16213e', borderRadius: '6px', color: '#fff', whiteSpace: 'pre-wrap' }}>
+              {viewingForm.NoiDung || 'Không có mô tả.'}
             </div>
           </div>
-        </>
-      )}
-
-      {/* Màn hình Chi tiết */}
-      {viewingForm && (
-        <>
-          <div className="d-flex align-items-center mb-4">
-            <h2 style={{ color: '#f8cc46' }}>Chi Tiết Biểu Mẫu</h2>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button className="btn-view" onClick={() => handlePreview(viewingForm.DuongDan)}>
+              <FileTextOutlined /> Xem Preview
+            </button>
+            <button style={{ backgroundColor: '#27ae60', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }} 
+                    onClick={() => handleDownload(viewingForm.MaHoSo, viewingForm.TenHoSo)}>
+              <FileOutlined /> Tải về máy
+            </button>
+            <button className="btn-delete" style={{ backgroundColor: '#7f8c8d' }} onClick={() => setViewingForm(null)}>Quay lại</button>
           </div>
-          <div className="card" style={styles.card}>
-            <div className="card-body">
-              <h4 className="mb-4" style={{ color: '#f8cc46' }}>{viewingForm.TenHoSo}</h4>
-              <div className="row mb-3">
-                <div className="col-md-3 fw-bold text-muted">Nội dung:</div>
-                <div className="col-md-9 p-3 rounded" style={{ backgroundColor: '#13141f', border: '1px solid #2d2e42' }}>
-                  {viewingForm.NoiDung || <em>Không có mô tả</em>}
-                </div>
-              </div>
-              
-              <div className="row mb-4">
-                <div className="col-md-3 fw-bold text-muted">Tập tin đính kèm:</div>
-                <div className="col-md-9">
-                  <div className="d-flex gap-3">
-                    <button className="btn btn-info text-white" onClick={() => handlePreview(viewingForm.DuongDan)}>Xem Preview</button>
-                    <button className="btn btn-success" onClick={() => handleDownload(viewingForm.MaHoSo, viewingForm.TenHoSo)}>Tải Về</button>
-                  </div>
-                </div>
-              </div>
-
-              <button className="btn btn-secondary" onClick={() => setViewingForm(null)}>Quay Lại</button>
-            </div>
-          </div>
-        </>
+        </div>
       )}
     </div>
   );
