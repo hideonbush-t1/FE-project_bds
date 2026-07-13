@@ -15,7 +15,7 @@ import { RegisterPage } from '../pages/public/RegisterPage';
 // ================== ADMIN PAGES ==================
 import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage';
 import { AdminNhanVienPage } from '../pages/admin/AdminNhanVienPage';
-import { AdminKhachHangPage } from '../pages/admin/AdminKhachHangPage';
+import AdminKhachHangPage from '../pages/admin/AdminKhachHangPage';
 import { AdminBatDongSanPage } from '../pages/admin/AdminBatDongSanPage';
 import { AdminGiaoDichPage } from '../pages/admin/AdminGiaoDichPage';
 import { AdminThongBaoPage } from '../pages/admin/AdminThongBaoPage';
@@ -36,6 +36,7 @@ import EmployeeKhachHangPage from '../pages/employee/EmployeeKhachHangPage';
 import ThemKhachHang from '../pages/employee/khachhang/ThemKhachHang';
 import ChiTietKhachHang from '../pages/employee/khachhang/ChiTietKhachHang';
 import SuaKhachHang from '../pages/employee/khachhang/SuaKhachHang';
+import { PropertyDetailView } from '../pages/public/PropertyDetail';
 
 export default function AppRoutes() {
   return (
@@ -48,6 +49,7 @@ export default function AppRoutes() {
           <Route path="/lich-lam-viec" element={<SchedulePage />} />
           <Route path="/ho-tro" element={<SupportPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/chi-tiet/:id" element={<PropertyDetailView />} />
         </Route>
 
         {/* 2. ADMIN ROUTES */}
@@ -79,6 +81,7 @@ export default function AppRoutes() {
           <Route path="thong-bao" element={<EmployeeThongBaoPage />} />
           <Route path="ho-so-bieu-mau" element={<EmployeeHoSoBieuMauPage />} />
           <Route path="profile" element={<EmployeeProfilePage />} />
+          
         </Route>
 
         {/* 4. FALLBACK */}
