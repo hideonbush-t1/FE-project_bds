@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect} from 'react';
 import { http } from '../../api/http';
+import { useNavigate } from 'react-router-dom';
 
 export function HomePage() {
   const [danhSachBDS, setDanhSachBDS] = useState<any[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     http.get('/public/bat-dong-san')
@@ -22,32 +24,24 @@ export function HomePage() {
       </section>
 
       {/* ================= PROJECTS SECTION ================= */}
-      <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '2rem' }}>
-        <div className="projects-grid">
-          {danhSachBDS.map((project, index) => (
-            <div className="project-card" key={project.id || index}>
+      <main style={{ backgroundColor: '#111111', color: '#fff', padding: '40px 20px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <h2 style={{ color: '#D4AF37', marginBottom: '30px' }}>Dự án nổi bật</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '25px' }}>
+            {danhSachBDS.map((project) => (
               <div 
-                className="project-image" 
-                style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #F5D76E 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#111111', fontWeight: 'bold', fontSize: '1rem', textAlign: 'center', padding: '1rem' }}
+                key={project.id} 
+                onClick={() => navigate(`/chi-tiet/${project.id}`)}
+                style={{ background: '#1a1a1a', borderRadius: '10px', border: '1px solid #333', cursor: 'pointer', transition: '0.3s' }}
               >
-                <i className="fas fa-building" style={{ marginRight: '0.5rem' }}></i> 
-                {project.tieuDe || project.loaiBDS}
-              </div>
-              <div className="project-content">
-                <h3 className="project-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.tieuDe || project.loaiBDS}</h3>
-                <p className="project-info"><i className="fas fa-expand"></i> Diện tích: {project.dienTich} m²</p>
-                <p className="project-info" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><i className="fas fa-map-marker-alt"></i> Vị trí: {project.diaChi}</p>
-                <p className="project-info" style={{ color: '#D4AF37', fontWeight: 'bold', fontSize: '1.1rem', marginTop: '10px' }}><i className="fas fa-money-bill-wave"></i> {Number(project.giaTien).toLocaleString('vi-VN')} VNĐ</p>
-                <div className="project-actions">
-                  <button className="btn btn-primary"><i className="fas fa-eye"></i> Xem Chi Tiết</button>
+                <img src={project.hinhAnhs?.[0]?.duongDan} style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '10px 10px 0 0' }} />
+                <div style={{ padding: '15px' }}>
+                  <h4 style={{ margin: '0 0 10px 0' }}>{project.tieuDe}</h4>
+                  <p style={{ color: '#D4AF37', fontWeight: 'bold' }}>{Number(project.giaTien).toLocaleString('vi-VN')} VNĐ</p>
                 </div>
               </div>
-            </div>
-          ))}
-
-          {danhSachBDS.length === 0 && (
-            <div style={{ color: 'white', textAlign: 'center', gridColumn: '1 / -1' }}>Đang tải dữ liệu bất động sản...</div>
-          )}
+            ))}
+          </div>
         </div>
       </main>
     </>

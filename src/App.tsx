@@ -49,6 +49,7 @@ import EmployeeKhachHangPage from './pages/employee/EmployeeKhachHangPage';
 import ThemKhachHang from './pages/employee/khachhang/ThemKhachHang';
 import ChiTietKhachHang from './pages/employee/khachhang/ChiTietKhachHang';
 import SuaKhachHang from './pages/employee/khachhang/SuaKhachHang';
+import { PropertyDetailView } from './pages/public/PropertyDetail';
 
 export function App() {
   return (
@@ -70,6 +71,7 @@ export function App() {
           <Route path="/lich-lam-viec" element={<SchedulePage />} />
           <Route path="/ho-tro" element={<SupportPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/chi-tiet/:id" element={<PropertyDetailView />} />
         </Route>
 
         {/* 2. Tuyến đường ADMIN (Bọc ProtectedRoute role="admin") */}
