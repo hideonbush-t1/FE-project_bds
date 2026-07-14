@@ -67,8 +67,7 @@ const AddBatDongSan = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  // Bộ lọc khách hàng linh hoạt: Tìm theo Tên, Mã ID, hoặc Số điện thoại
+// Bộ lọc khách hàng linh hoạt: Tìm theo Tên, Mã ID, hoặc Số điện thoại
   const filteredKhachHang = khachHangList.filter(kh =>
     kh.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     kh.hoTen?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -141,7 +140,7 @@ const AddBatDongSan = () => {
   };
 
   const onSubmit = (data: any) => {
-    if (selectedFiles.length === 0) {
+if (selectedFiles.length === 0) {
       toast.error('Vui lòng cấu hình ít nhất 1 hình ảnh hoặc video cho bất động sản!');
       return;
     }
@@ -177,11 +176,17 @@ const AddBatDongSan = () => {
     })
       .then(async (response) => {
         if (response.ok) {
-          toast.update(toastId, { render: "Thêm mới bất động sản thành công!", type: "success", isLoading: false, autoClose: 3000 });
+          toast.update(toastId, { render: "Thêm mới bất động sản thành công!", type: "success", isLoading: false, autoClose: 1500 });
           setSelectedFiles([]);
           setPreviewItems([]);
           setSearchTerm('');
           reset();
+          
+          // ĐÃ THÊM: Chờ 1.5 giây để người dùng đọc thông báo xong rồi tự động đá về trang Danh sách
+          setTimeout(() => {
+            navigate('/admin/bat-dong-san');
+          }, 1500);
+
         } else {
           const errorData = await response.json();
           let errorMessage = Array.isArray(errorData.message) ? errorData.message[0] : errorData.message;
@@ -203,7 +208,7 @@ const AddBatDongSan = () => {
             {/* Bộ Tìm Kiếm Khách Hàng Thông Minh (Auto-suggest) */}
             <div className="form-group" style={{ position: 'relative' }} ref={suggestionRef}>
               <label>Khách hàng sở hữu (*) (Tìm theo Tên, Mã, hoặc SĐT)</label>
-              <input 
+<input 
                 type="text" 
                 placeholder=" Nhập thông tin để tìm kiếm khách hàng..." 
                 value={searchTerm}
@@ -259,7 +264,7 @@ const AddBatDongSan = () => {
             <div className="form-group">
               <label>Loại bất động sản (*)</label>
               <select {...register('loaiBDS')}>
-                <option value="Nhà ở">Nhà ở</option>
+<option value="Nhà ở">Nhà ở</option>
                 <option value="Đất nền">Đất nền</option>
                 <option value="Căn hộ chung cư">Căn hộ chung cư</option>
                 <option value="Biệt thự">Biệt thự</option>
@@ -317,8 +322,7 @@ const AddBatDongSan = () => {
               <label>Ghi chú / Mô tả chi tiết</label>
               <textarea {...register('ghiChu')} rows={3} style={{ width: '100%', padding: '10px', borderRadius: '4px', backgroundColor: '#13141f', color: '#fff', border: '1px solid #2d2e42' }} placeholder="Nhập thông tin mô tả chi tiết công trình, nội thất hoặc pháp lý kèm theo..."></textarea>
             </div>
-
-            {/* Vùng chọn đa file và hiển thị Preview lưới */}
+{/* Vùng chọn đa file và hiển thị Preview lưới */}
             <div className="form-group full-width">
               <label>Tải lên Tài nguyên BĐS (* Tối đa 10 file. Gồm nhiều ảnh &lt; 5MB và tối đa 1 video &lt; 20MB)</label>
               <input 
@@ -369,7 +373,7 @@ const AddBatDongSan = () => {
           <div className="form-actions">
             <button type="button" className="btn-cancel" onClick={() => navigate(-1)}>Hủy bỏ</button>
             <button type="submit" className="btn-submit">Lưu lại hệ thống</button>
-          </div>
+</div>
         </form>
       </div>
     </div>

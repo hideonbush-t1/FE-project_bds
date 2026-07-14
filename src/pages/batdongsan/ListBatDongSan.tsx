@@ -22,11 +22,11 @@ const ListBatDongSan = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem('accessToken') || '';
 
-  // 💡 1. LẤY QUYỀN USER ĐỂ ẨN NÚT & ĐIỀU HƯỚNG ĐỘNG
-  const userRaw = localStorage.getItem('user');
-  const currentUser = userRaw ? JSON.parse(userRaw) : null;
-  const isAdmin = currentUser && String(currentUser.Role || currentUser.role).toLowerCase() === 'admin';
-  const basePath = isAdmin ? '/admin' : '/employee'; // Điều hướng đúng luồng
+  // STATE QUẢN LÝ MODAL XÓA
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; bdsId: string | null }>({
+    isOpen: false,
+    bdsId: null
+  });
 
   const fetchBDS = useCallback(() => {
     const hasFilters = filters.loaiBDS || filters.viTri || filters.diaChi || filters.giaMin || filters.giaMax || filters.huong;
@@ -70,7 +70,6 @@ const ListBatDongSan = () => {
 
   const [localFilters, setLocalFilters] = useState(filters);
 
-  // Xử lý lọc thông minh (Quy đổi chuỗi giá trị thành số tiền Min/Max)
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
@@ -78,7 +77,7 @@ const ListBatDongSan = () => {
       let min = '', max = '';
       if (value === 'duoi-500tr') { max = '500000000'; }
       else if (value === '500tr-1ty') { min = '500000000'; max = '1000000000'; }
-      else if (value === '1-3ty') { min = '1000000000'; max = '3000000000'; }
+else if (value === '1-3ty') { min = '1000000000'; max = '3000000000'; }
       else if (value === '3-5ty') { min = '3000000000'; max = '5000000000'; }
       else if (value === '5-10ty') { min = '5000000000'; max = '10000000000'; }
       else if (value === '10-50ty') { min = '10000000000'; max = '50000000000'; }
@@ -90,7 +89,6 @@ const ListBatDongSan = () => {
     }
   };
 
-  // Dịch ngược lại từ số tiền ra hiển thị Dropdown
   const getSelectedPrice = (min: string, max: string) => {
     if (!min && max === '500000000') return 'duoi-500tr';
     if (min === '500000000' && max === '1000000000') return '500tr-1ty';
@@ -126,22 +124,33 @@ const ListBatDongSan = () => {
     setSearchParams(params);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa tài sản này?')) {
-      fetch(`http://localhost:4000/bat-dong-san/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+  // HÀM MỞ POPUP XÓA THAY VÌ XÓA LUÔN
+  const handleDeleteClick = (id: string) => {
+    setDeleteModal({ isOpen: true, bdsId: id });
+  };
+
+  // HÀM GỌI API XÓA THỰC SỰ KHI BẤM "ĐỒNG Ý XÓA" TRONG POPUP
+  const confirmDelete = () => {
+    const id = deleteModal.bdsId;
+    if (!id) return;
+
+    fetch(`http://localhost:4000/bat-dong-san/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then((response) => {
+        if (response.ok) {
+          toast.success('Đã xóa bất động sản thành công!');
+          setDanhSachBDS((prev) => prev.filter((item) => item.id !== id));
+        } else {
+          toast.error('Lỗi khi xóa tài sản hoặc bạn không có quyền thực hiện!');
+        }
       })
-        .then((response) => {
-          if (response.ok) {
-            toast.success('Đã xóa bất động sản thành công!');
-            setDanhSachBDS((prev) => prev.filter((item) => item.id !== id));
-          } else {
-            toast.error('Lỗi khi xóa tài sản hoặc bạn không có quyền thực hiện!');
-          }
-        })
-        .catch(() => toast.error('Lỗi kết nối mạng!'));
-    }
+      .catch(() => toast.error('Lỗi kết nối mạng!'))
+      .finally(() => {
+// Luôn đóng popup dù xóa thành công hay thất bại
+        setDeleteModal({ isOpen: false, bdsId: null });
+      });
   };
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -155,13 +164,11 @@ const ListBatDongSan = () => {
       
       <div className="bds-header">
         <h2>Danh sách Bất động sản</h2>
-        {/* 💡 2. Thay thế cứng /admin bằng basePath */}
-        <button className="btn-add" onClick={() => navigate(`${basePath}/bat-dong-san/add`)}>
+        <button className="btn-add" onClick={() => navigate('/admin/bat-dong-san/add')}>
           + Thêm Bất động sản
         </button>
       </div>
 
-      {/* Áp dụng class bds-filter-card và filter-group chuẩn từ file CSS của bạn */}
       <div className="bds-filter-card">
         <div className="filter-group">
           <label>Loại BĐS</label>
@@ -185,14 +192,9 @@ const ListBatDongSan = () => {
           <input type="text" name="viTri" value={localFilters.viTri} onChange={handleFilterChange} placeholder="Mặt tiền, ngõ..." />
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 2, minWidth: '180px' }}>
-          <label style={{ fontSize: '13px', color: '#bdc3c7', marginBottom: '6px', fontWeight: '500' }}>Mức giá</label>
-          <select 
-            name="mucGia" 
-            value={getSelectedPrice(localFilters.giaMin, localFilters.giaMax)} 
-            onChange={handleFilterChange} 
-            style={{ padding: '10px', borderRadius: '6px', backgroundColor: '#2d3436', color: 'white', border: '1px solid #4a5459', outline: 'none' }}
-          >
+        <div className="filter-group">
+          <label>Mức giá</label>
+          <select name="mucGia" value={getSelectedPrice(localFilters.giaMin, localFilters.giaMax)} onChange={handleFilterChange}>
             <option value="">-- Tất cả mức giá --</option>
             <option value="duoi-500tr">Dưới 500 triệu</option>
             <option value="500tr-1ty">500 triệu - 1 tỷ</option>
@@ -212,7 +214,7 @@ const ListBatDongSan = () => {
             <option value="Tây">Tây</option>
             <option value="Nam">Nam</option>
             <option value="Bắc">Bắc</option>
-            <option value="Đông Nam">Đông Nam</option>
+<option value="Đông Nam">Đông Nam</option>
             <option value="Tây Nam">Tây Nam</option>
             <option value="Đông Bắc">Đông Bắc</option>
             <option value="Tây Bắc">Tây Bắc</option>
@@ -259,14 +261,10 @@ const ListBatDongSan = () => {
                     </span>
                   </td>
                   <td className="actions">
-                    {/* 💡 3. Sửa đường dẫn Xem & Sửa thành động theo basePath */}
-                    <button className="btn-view" onClick={() => navigate(`${basePath}/bat-dong-san/detail/${bds.id}`)}>Xem</button>
-                    <button className="btn-edit" onClick={() => navigate(`${basePath}/bat-dong-san/edit/${bds.id}`)}>Sửa</button>
-                    
-                    {/* 💡 4. ĐIỀU KIỆN ẨN: Nút Xóa chỉ hiện khi isAdmin = true */}
-                    {isAdmin && (
-                      <button className="btn-delete" onClick={() => handleDelete(bds.id)}>Xóa</button>
-                    )}
+                    <button className="btn-view" onClick={() => navigate(`/admin/bat-dong-san/detail/${bds.id}`)}>Xem</button>
+                    <button className="btn-edit" onClick={() => navigate(`/admin/bat-dong-san/edit/${bds.id}`)}>Sửa</button>
+                    {/* ĐÃ SỬA: Bấm nút thì mở Modal thay vì gọi API ngay */}
+                    <button className="btn-delete" onClick={() => handleDeleteClick(bds.id)}>Xóa</button>
                   </td>
                 </tr>
               ))
@@ -287,11 +285,59 @@ const ListBatDongSan = () => {
             Trang trước
           </button>
           <span>Trang {currentPage} / {totalPages}</span>
-          <button disabled={currentPage === totalPages} onClick={() => handlePageChange(currentPage + 1)}>
+<button disabled={currentPage === totalPages} onClick={() => handlePageChange(currentPage + 1)}>
             Trang sau
           </button>
         </div>
       )}
+
+      {/* COMPONENT GIAO DIỆN MODAL XÓA CHUẨN XỊN */}
+      {deleteModal.isOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            backgroundColor: '#22223b', padding: '30px 40px', borderRadius: '12px',
+            width: '420px', textAlign: 'center', border: '1px solid rgba(231, 76, 60, 0.3)',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.8)'
+          }}>
+            <h3 style={{ color: '#e74c3c', marginTop: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '22px' }}>
+              ⚠️ Xác nhận xóa
+            </h3>
+            <p style={{ color: '#E0E0E0', fontSize: '15px', lineHeight: '1.6', marginTop: '15px' }}>
+              Bạn có chắc chắn muốn xóa bất động sản <br/>
+              <strong style={{ color: '#ffffff', fontSize: '16px' }}>{deleteModal.bdsId}</strong> không? <br/>
+              Hành động này không thể hoàn tác!
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '30px' }}>
+              <button 
+                onClick={() => setDeleteModal({ isOpen: false, bdsId: null })}
+                style={{ 
+                  padding: '10px 24px', borderRadius: '6px', border: 'none', 
+                  backgroundColor: '#7f8c8d', color: 'white', fontWeight: 'bold', 
+                  cursor: 'pointer', transition: '0.2s', fontSize: '14px' 
+                }}
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                onClick={confirmDelete}
+                style={{ 
+                  padding: '10px 24px', borderRadius: '6px', border: 'none', 
+                  backgroundColor: '#e74c3c', color: 'white', fontWeight: 'bold', 
+                  cursor: 'pointer', transition: '0.2s', fontSize: '14px' 
+                }}
+              >
+                Đồng ý xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

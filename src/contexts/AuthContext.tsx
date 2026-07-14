@@ -81,14 +81,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('user');
-    setUser(null);
+    // 1. Hiện popup thông báo ĐẦU TIÊN
     toast.success('Đăng xuất thành công!');
+
+    // 2. Đặt thời gian chờ 1.5 giây để popup kịp hiển thị
     setTimeout(() => {
-      window.location.href = '/';
-    }, 800);
-  };
+      // 3. Đợi xong mới bắt đầu xóa token, xóa state và ép chuyển trang
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+      setUser(null);
+      window.location.href = '/login'; // Hoặc '/' tùy vào route trang đăng nhập của bạn
+    }, 1500);
+  };;
 
   const refreshProfile = async () => {
     try {
