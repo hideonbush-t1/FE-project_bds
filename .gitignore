@@ -1,3 +1,19 @@
+node_modules
+.DS_Store
+.env
+.env.local
+.env.*.local
+dist
+build
+coverage
+backend/dist
+backend/node_modules
+backend/.env
+frontend/dist
+frontend/node_modules
+frontend/.env
+frontend/.vite
+=======
 # Logs
 logs
 *.log
@@ -141,3 +157,4 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+>>>>>>> origin/main
